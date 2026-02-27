@@ -1,0 +1,21 @@
+.APP {
+  background-color: rgb(0, 18, 51);
+  position: relative;
+  display: flex;
+  justify-content: center;
+  height: 100vh;
+}
+
+.Made {
+  display: flex;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgb(255, 255, 255);
+}
+
+.quaalla {
+  color: rgb(43, 205, 226);
+  margin-left: 5px;
+}
