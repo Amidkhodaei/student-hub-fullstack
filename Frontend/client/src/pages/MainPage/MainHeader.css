@@ -1,0 +1,28 @@
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: aliceblue;
+    color: blue;
+    width: 100%;
+    height: 5rem;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.profile {
+    margin-left: 10rem; 
+}
+
+.picture {
+    height: 3rem;
+    width: 3.5rem;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid blue;
+}
+
+.menu {
+    background-color: aquamarine;
+}

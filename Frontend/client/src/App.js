@@ -1,19 +1,37 @@
-import logo from './logo.svg';
+//import logo from './logo.svg';
 import './App.css';
+import { useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Login from './component/login_signup_pages/Login'
-import SignUp from './component/login_signup_pages/SignUp'
-import ForgotPassword from './component/login_signup_pages/ForgotPassword';
+import AuthContext from '../src/store/Authentication/AuthContext'
+import Login from './pages/login_signup_pages/Login'
+import SignUp from './pages/login_signup_pages/SignUp'
+import ForgotPassword from './pages/login_signup_pages/ForgotPassword';
+import MainPage from './pages/MainPage/MainPage';
 
 function App() {
+  const authCtx = useContext(AuthContext);
+
   return (
     <Router>
       <div className='APP'>
         <Routes>
           <Route path='/' element={<Navigate to="/login" />} />
-          <Route path='/login' element={<Login />} />
-          <Route path='/signup' element={<SignUp />} />
-          <Route path='/forgotpassword' element={<ForgotPassword />} />
+          {!authCtx.isLoggedIn &&
+            <Route path='/login' element={<Login />} /> }
+          {!authCtx.isLoggedIn &&
+            <Route path='/signup' element={<SignUp />} />}
+          {!authCtx.isLoggedIn &&
+            <Route path='/forgotpassword' element={<ForgotPassword />} />}
+
+          {authCtx.isLoggedIn &&
+            <Route path='/login' element={<Navigate to="/dashboard" />} /> }
+          {authCtx.isLoggedIn &&
+            <Route path='/signup' element={<Navigate to="/dashboard"/>} />}
+          {authCtx.isLoggedIn &&
+            <Route path='/forgotpassword' element={<Navigate to="/dashboard"/>} />}
+          
+          {authCtx.isLoggedIn && <Route path='/dashboard' element={<MainPage />} />}
+          {!authCtx.isLoggedIn && <Route path='/dashboard' element={<Navigate to="/login" />} />}
         </Routes>
 
         <p className='Made'>Made By <span className='quaalla'>Quaalla</span></p>

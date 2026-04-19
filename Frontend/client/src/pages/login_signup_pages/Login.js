@@ -1,0 +1,149 @@
+import React, {useState, useEffect, useContext} from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import './Login.css'
+import InputBox from '../../component/input_box/InputBox';
+import AuthContext from '../../store/Authentication/AuthContext';
+
+const Login = () => {
+    const [loginInput, setLoginInput] = useState({
+            enteredStudentNo: '',
+            enteredPass: '',
+        });
+    
+    const [isValidInput, setIsValidInput] = useState({
+            isValidStudentNo: true,
+            isValidPass: true,
+        });
+    const [activeSubmit, setActiveSubmit] = useState(true)
+    const [loading, setLoading] = useState(false);
+    const Navigate = useNavigate();
+    const authCtx = useContext(AuthContext);
+
+    const studentnochangehandler = (event) => {
+        if (event.target.value.trim().length > 8 || event.target.value.trim().length < 7 || !/^\d+$/.test(event.target.value.trim())) {
+            setIsValidInput((prevState) => {
+                return {...prevState, isValidStudentNo: false}
+            })
+        } else {
+            setIsValidInput((prevState) => {
+                return {...prevState, isValidStudentNo: true}
+            })
+        }
+        setLoginInput((prevState) => {
+            return {...prevState, enteredStudentNo: event.target.value};
+        });
+    }
+
+    const passchangehandler = (event) => {
+        if (event.target.value.trim().length >= 6) {
+            setIsValidInput((prevState) => {
+                return {...prevState, isValidPass: true}
+            })
+        } else {
+            setIsValidInput((prevState) => {
+                return {...prevState, isValidPass: false}
+            })
+        }
+        setLoginInput((prevState) => {
+            return {...prevState, enteredPass: event.target.value}
+        })
+    }
+
+    useEffect(() => {
+        setActiveSubmit(isValidInput.isValidStudentNo
+                        && isValidInput.isValidPass);
+    }, [isValidInput.isValidStudentNo, isValidInput.isValidPass]);
+
+    const submithandler = async (event) => {
+        event.preventDefault()
+
+        let StudentNo = loginInput.enteredStudentNo.trim();
+        let pass = loginInput.enteredPass.trim();
+        let Hasreturned = false;
+
+        if (StudentNo.length > 8 || StudentNo.length < 7 || !/^\d+$/.test(StudentNo)) {
+            setIsValidInput((prevState) => {
+                return {...prevState, isValidStudentNo: false}
+            })
+            Hasreturned = true;
+        } else {
+            setIsValidInput((prevState) => {
+                return {...prevState, isValidStudentNo: true}
+            })
+        }
+        setLoginInput((prevState) => {
+            return {...prevState, enteredStudentNo: StudentNo};
+        });
+
+        if (pass.length >= 6) {
+            setIsValidInput((prevState) => {
+                return {...prevState, isValidPass: true}
+            })
+        } else {
+            setIsValidInput((prevState) => {
+                return {...prevState, isValidPass: false}
+            })
+            Hasreturned = true;
+        }
+        setLoginInput((prevState) => {
+            return {...prevState, enteredPass: StudentNo}
+        })
+
+        if (Hasreturned){
+            return;
+        }
+
+        setLoading(true);
+        try
+        {
+            const respone = await fetch('http://127.0.0.1:8000/api/login/', {
+            method: 'POST',
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                student_no: loginInput.enteredStudentNo,
+                password: loginInput.enteredPass,
+                }),
+            });
+            const data = await respone.json()
+            
+            if (!respone.ok) {
+                throw new Error('sth went wrong!');
+            }
+
+            const accessPayload = JSON.parse(atob(data.access.split(".")[1]));
+            const accessExp = accessPayload.exp;               
+            const accessExpDate = accessExp * 1000;  
+
+            // decode refresh token
+            const refreshPayload = JSON.parse(atob(data.refresh.split(".")[1]));
+            const refreshExp = refreshPayload.exp;
+            const refreshExpDate = refreshExp * 1000;
+
+            console.log("Access expires:", accessExpDate);
+            console.log("Refresh expires:", refreshExpDate);
+
+            authCtx.login(data.access, data.refresh, accessExpDate, refreshExpDate);
+            Navigate("/dashboard");
+        } catch(error) {
+            console.log('invalid');
+        }
+        setLoading(false);
+    }
+
+    return (
+        <div className='login'>
+            <InputBox type="text" value={loginInput.enteredStudentNo} onChange={studentnochangehandler} isValid={isValidInput.isValidStudentNo} defualt='شماره دانشجویی' />
+            <InputBox type="password" value={loginInput.enteredPass} onChange={passchangehandler}     isValid={isValidInput.isValidPass} defualt='رمز عبور' />
+            {!loading && <button className='button' disabled={!activeSubmit} onClick={submithandler}> ورود </button>}
+            {loading && <p style={{color: 'white'}}> Loading... </p>}
+            <div className='option'>
+                <Link  className='text'>فراموشی رمز عبور</Link>
+                <Link to="/signup" className='text'>ساخت اکانت جدید</Link>
+            </div>
+        </div>
+    );
+}
+
+export default Login
