@@ -3,8 +3,63 @@ import MainHeader from "./MainHeader";
 const MainPage = () => {
     return (
         <div>
-            <MainHeader></MainHeader>
             
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
+            <p style={{color: 'red'}}>helllloooooo</p>
         </div>
     );
 }
