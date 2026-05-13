@@ -2,64 +2,8 @@ import MainHeader from "./MainHeader";
 
 const MainPage = () => {
     return (
-        <div>
-            
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
-            <p style={{color: 'red'}}>helllloooooo</p>
+        <div style={{color : 'white'}}>
+            <p style={{fontSize : '10rem'}}>Hello!</p>
         </div>
     );
 }

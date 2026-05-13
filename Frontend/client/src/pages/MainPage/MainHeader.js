@@ -14,7 +14,25 @@ const MainHeader = () => {
             <div className='profile'>
                 <img className='picture' src='/profile.png' />
             </div>
-            <div className='menu'></div>
+            <div className='menu'>
+                <nav className='navbar'> 
+                    <ul>
+                        <li>
+                            <a href='/Comments'>نظرات و پیشنهادات</a>
+                        </li>
+                        <li>
+                            <a href='/survey'>نظرسنجی اساتید</a>
+                        </li>
+                        <li>
+                            <a href='/terminder'>ترمایندر</a>
+                        </li>
+                        <li>
+                            <a href='/dashboard' className='home_link'>خانه</a>
+                        </li>
+                        
+                    </ul>
+                </nav>
+            </div>
         </div>
     );
 };
