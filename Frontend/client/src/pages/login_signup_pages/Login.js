@@ -134,8 +134,8 @@ const Login = () => {
 
     return (
         <div className='login'>
-            <InputBox type="text" value={loginInput.enteredStudentNo} onChange={studentnochangehandler} isValid={isValidInput.isValidStudentNo} defualt='شماره دانشجویی' />
-            <InputBox type="password" value={loginInput.enteredPass} onChange={passchangehandler}     isValid={isValidInput.isValidPass} defualt='رمز عبور' />
+            <InputBox type="text" value={loginInput.enteredStudentNo} onChange={studentnochangehandler} isValid={isValidInput.isValidStudentNo} defualt='شماره دانشجویی' style={{ width: '50%', height: '8%' }} />
+            <InputBox type="password" value={loginInput.enteredPass} onChange={passchangehandler}     isValid={isValidInput.isValidPass} defualt='رمز عبور' style={{ width: '50%', height: '8%' }} />
             {!loading && <button className='button' disabled={!activeSubmit} onClick={submithandler}> ورود </button>}
             {loading && <p style={{color: 'white'}}> Loading... </p>}
             <div className='option'>

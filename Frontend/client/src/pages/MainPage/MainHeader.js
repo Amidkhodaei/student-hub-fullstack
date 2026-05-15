@@ -28,7 +28,7 @@ const MainHeader = () => {
                 <nav className='navbar'> 
                     <ul>
                         
-                        <li><a href='/Comments'>نظرات و پیشنهادات</a></li>
+                        <li><a href='/comments'>نظرات و پیشنهادات</a></li>
                         <li><a href='/survey'>نظرسنجی اساتید</a></li>
                         <li><a href='/terminder'>ترمایندر</a></li>
                         <li><a href='/dashboard' className='home_link'>خانه</a></li>

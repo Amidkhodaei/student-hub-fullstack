@@ -3,8 +3,8 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from .models import User
-from .serializers import UserSerializer
+from .models import User, Department
+from .serializers import UserSerializer, DepartmentSerializer
 
 # Create your views here.
 class UserViewSet(viewsets.ViewSet):
@@ -30,3 +30,8 @@ class UserViewSet(viewsets.ViewSet):
         queryset = User.objects.all()
         serializer = UserSerializer(queryset, many=True)
         return Response(serializer.data)
+    
+class DepartmentViewSet(viewsets.ModelViewSet):
+    queryset = Department.objects.all()
+    serializer_class = DepartmentSerializer
+    permission_classes = [IsAdminUser]

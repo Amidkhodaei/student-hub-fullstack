@@ -1,7 +1,5 @@
 .input {
     display: block;
-    width: 50%;
-    height: 8%;
     border-radius: 7px;
     background: rgb(92, 103, 125);
     color: aliceblue;
@@ -9,6 +7,7 @@
     border: 1px solid transparent;
     transition: all 0.3s ease;   
     outline: none;
+    text-align: center;
 }
 
 .input:focus {

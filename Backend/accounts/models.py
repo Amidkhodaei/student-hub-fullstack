@@ -40,3 +40,10 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.student_no})"
+    
+class Department(models.Model):
+    dept_id = models.IntegerField(unique=True)
+    dept_name = models.CharField(max_length=50, unique=True)
+
+    def __str__(self):
+        return self.dept_name

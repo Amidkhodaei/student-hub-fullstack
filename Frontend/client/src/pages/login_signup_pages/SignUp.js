@@ -210,13 +210,13 @@ const SignUp = () => {
 
     return (
         <div className='signup'>
-            <InputBox type='text' value={signUpInput.enteredStudentNo} onChange={studentnochangehandler} isValid={isValidInput.isValidStudentNo} defualt='*شماره دانشجویی' />
-            <InputBox type="text" value={signUpInput.enteredFirstName} onChange={fisrtnamechangehandler} isValid='true' defualt='نام' />
-            <InputBox type="text" value={signUpInput.enteredLastName}  onChange={lastnamechangehandler}  isValid='true' defualt='نام خانوادگی' />
-            <InputBox type="text" value={signUpInput.enteredPhone}     onChange={phonechangehandler}     isValid='true' defualt='شماره' />
-            <InputBox type="text" value={signUpInput.enteredEmail}     onChange={emailchangehandler}     isValid={isValidInput.isValidEmail} defualt='*ایمیل' />
-            <InputBox type="password" value={signUpInput.enteredPass1} onChange={pass1changehandler}     isValid={isValidInput.isValidPass1} defualt='*رمز عبور' />
-            <InputBox type="password" value={signUpInput.enteredPass2} onChange={pass2changehandler}     isValid={isValidInput.isValidPass2} defualt='*تکرار رمز عبور' />
+            <InputBox type='text' value={signUpInput.enteredStudentNo} onChange={studentnochangehandler} isValid={isValidInput.isValidStudentNo} defualt='*شماره دانشجویی' style={{ width: '50%', height: '8%' }} />
+            <InputBox type="text" value={signUpInput.enteredFirstName} onChange={fisrtnamechangehandler} isValid='true' defualt='نام' style={{ width: '50%', height: '8%' }} />
+            <InputBox type="text" value={signUpInput.enteredLastName}  onChange={lastnamechangehandler}  isValid='true' defualt='نام خانوادگی' style={{ width: '50%', height: '8%' }} />
+            <InputBox type="text" value={signUpInput.enteredPhone}     onChange={phonechangehandler}     isValid='true' defualt='شماره' style={{ width: '50%', height: '8%' }} />
+            <InputBox type="text" value={signUpInput.enteredEmail}     onChange={emailchangehandler}     isValid={isValidInput.isValidEmail} defualt='*ایمیل' style={{ width: '50%', height: '8%' }} />
+            <InputBox type="password" value={signUpInput.enteredPass1} onChange={pass1changehandler}     isValid={isValidInput.isValidPass1} defualt='*رمز عبور' style={{ width: '50%', height: '8%' }} />
+            <InputBox type="password" value={signUpInput.enteredPass2} onChange={pass2changehandler}     isValid={isValidInput.isValidPass2} defualt='*تکرار رمز عبور' style={{ width: '50%', height: '8%' }} />
             {!loading && 
                 <button className='button' disabled={!activeSubmit} onClick={submithandler}> ثبت نام </button>
             }

@@ -1,0 +1,17 @@
+.AddBox {
+    margin-top: 5rem;
+    padding: 1rem;
+    justify-content: space-between;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    display: flex;
+}
+
+.SubmitBox {
+    width: 25%;
+    height: 50px;
+    border-radius: 7px;
+    background: rgb(92, 103, 125);
+    color: white;
+}

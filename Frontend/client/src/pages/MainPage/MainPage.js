@@ -1,5 +1,3 @@
-import MainHeader from "./MainHeader";
-
 const MainPage = () => {
     return (
         <div style={{color : 'white'}}>

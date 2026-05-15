@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User
+from .models import User, Department
 
 class UserSerializer(serializers.ModelSerializer):
     fullname = serializers.SerializerMethodField(read_only = True)
@@ -30,3 +30,17 @@ class UserSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         return User.objects.create_user(**validated_data)
+    
+class DepartmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Department
+
+        fields = [
+            'dept_id',
+            'dept_name'
+        ]
+
+        extra_kwargs = {
+            'dept_id' : {'write_only': True, 'required': True},
+            'dept_name': {'required': True}
+        }
