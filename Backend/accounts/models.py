@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 # Create your models here.
 class MyUserManager(BaseUserManager):
@@ -47,3 +48,91 @@ class Department(models.Model):
 
     def __str__(self):
         return self.dept_name
+    
+class Instructor(models.Model):
+    instructor_name = models.CharField(max_length=50)
+    departments = models.ManyToManyField(Department, related_name='instructors')
+
+    def __str__(self):
+        return self.instructor_name
+    
+class Lesson(models.Model):
+    GENDER_CHOICES = [
+        (0, 'مختلط'),
+        (1, 'مرد'),
+        (2, 'زن'),
+    ]
+    DAY_CHOICES = [
+        (0, 'شنبه'),
+        (1, 'یکشنبه'),
+        (2, 'دوشنبه'),
+        (3, 'سه‌شنبه'),
+        (4, 'چهارشنبه'),
+        (5, 'پنجشنبه'),
+        (6, 'جمعه'),
+    ]
+    lesson_id = models.CharField(max_length=10, unique=True)
+    lesson_name = models.CharField(max_length=100)
+    department_id = models.ForeignKey(Department, on_delete=models.CASCADE, related_name='lessons')
+    credit = models.IntegerField(validators=[
+        MinValueValidator(0, message="Invalid Credit"),
+        MaxValueValidator(4, message="Invalid Credit")
+    ])
+    active_credit = models.DecimalField(
+        max_digits=3,
+        decimal_places=1,
+        validators=[
+            MinValueValidator(0, message="Invalid Credit"),
+            MaxValueValidator(1, message="Invalid Credit")
+        ]
+    )
+    capacity = models.IntegerField()
+    gender = models.IntegerField(choices=GENDER_CHOICES, default=0)
+    instructors_list = models.JSONField(default=list, blank=True, null=True)
+    times = models.JSONField(default=list)
+    exam_time = models.JSONField(default=list, blank=True, null=True)
+    description = models.TextField()
+
+    def clean(self):
+        """اعتبارسنجی زمان‌ها"""
+        if not isinstance(self.times, list):
+            raise ValidationError({'times': 'فرمت زمان‌ها باید لیست باشد'})
+        
+        for idx, time_slot in enumerate(self.times):
+            # بررسی وجود فیلدهای required
+            required_fields = ['day', 'start', 'end', 'isExerciseSolving']
+            for field in required_fields:
+                if field not in time_slot:
+                    raise ValidationError({
+                        'times': f'زمان {idx+1}: فیلد {field} الزامی است'
+                    })
+            
+            # بررسی روز
+            if time_slot['day'] not in [0, 1, 2, 3, 4, 5, 6]:
+                raise ValidationError({
+                    'times': f'زمان {idx+1}: روز باید بین 0 تا 6 باشد'
+                })
+            
+            # بررسی زمان شروع و پایان
+            if time_slot['start'] < 0 or time_slot['start'] > 23:
+                raise ValidationError({
+                    'times': f'زمان {idx+1}: ساعت شروع باید بین 0 تا 23 باشد'
+                })
+            
+            if time_slot['end'] < 0 or time_slot['end'] > 23:
+                raise ValidationError({
+                    'times': f'زمان {idx+1}: ساعت پایان باید بین 0 تا 23 باشد'
+                })
+            
+            if time_slot['start'] >= time_slot['end']:
+                raise ValidationError({
+                    'times': f'زمان {idx+1}: ساعت شروع باید از پایان کمتر باشد'
+                })
+            
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return f"{self.lesson_id} - {self.lesson_name}" 
+    

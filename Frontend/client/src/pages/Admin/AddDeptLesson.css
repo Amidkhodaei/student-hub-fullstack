@@ -15,3 +15,11 @@
     background: rgb(92, 103, 125);
     color: white;
 }
+
+.SelectBox {
+    width: 45%;
+    height: 50px;
+    border-radius: 7px;
+    background: rgb(92, 103, 125);
+    color: white;
+}

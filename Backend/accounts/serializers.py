@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Department
+from .models import User, Department, Instructor, Lesson
 
 class UserSerializer(serializers.ModelSerializer):
     fullname = serializers.SerializerMethodField(read_only = True)
@@ -41,6 +41,26 @@ class DepartmentSerializer(serializers.ModelSerializer):
         ]
 
         extra_kwargs = {
-            'dept_id' : {'write_only': True, 'required': True},
+            'dept_id' : {'required': True},
             'dept_name': {'required': True}
+        }
+
+class  InstructorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Instructor
+        fields = '__all__'
+
+class  LessonSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Lesson
+        fields = '__all__'
+
+        extra_kwargs = {
+            'lesson_id' : {'required': True},
+            'lesson_name': {'required': True},
+            'credit' : {'required': True},
+            'active_credit': {'required': True},
+            'capacity' : {'required': True},
+            'gender': {'required': True},
+            'times': {'required': True},
         }
