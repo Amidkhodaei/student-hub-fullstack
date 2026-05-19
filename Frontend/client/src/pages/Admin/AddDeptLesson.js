@@ -2,6 +2,7 @@ import {useState, useContext, useEffect} from 'react'
 import './AddDeptLesson.css'
 import InputBox from '../../component/input_box/InputBox';
 import AuthContext from '../../store/Authentication/AuthContext';
+import ButtonBox from '../../component/button/ButtonBox';
 
 const AddDeptLesson = () => {
     const authCtx = useContext(AuthContext);
@@ -10,6 +11,8 @@ const AddDeptLesson = () => {
     const [departments, setDepartments] = useState(null);
     const [counter, setCounter] = useState(0);
     const [selectedDept, setSelectedDept] = useState('');
+    const [excelFile, setExcelFile] = useState(null);
+    const [sendingFile, setSendingFile] = useState(false);
 
     const changeidhandler = (event) => {
         setDeptid(event.target.value.trim());
@@ -20,8 +23,8 @@ const AddDeptLesson = () => {
     };
 
     const addDeptbutton = async () => {
-        if (deptid.length != 2) return;
-        if (deptname.length == 0) return;
+        if (deptid.length !== 2) return;
+        if (deptname.length === 0) return;
 
         console.log(deptid + ' ' + deptname);
 
@@ -84,15 +87,65 @@ const AddDeptLesson = () => {
         console.log('Department selected:', event.target.value);
     };
 
+    const handleFileChange = (event) => {
+        const file = event.target.files[0];
+        if (file && (file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
+                     file.type === 'application/vnd.ms-excel')) {
+            setExcelFile(file);
+        } else {
+            setExcelFile(null);
+        }
+    };
+
+    const handlefileSubmit = async () => {
+        if (!selectedDept) return;
+        
+        if (!excelFile) return;
+
+        setSendingFile(true);
+
+        // ایجاد FormData برای ارسال فایل
+        const formData = new FormData();
+        formData.append('department_id', selectedDept);
+        formData.append('excel_file', excelFile);
+
+        try {
+            const response = await fetch('http://127.0.0.1:8000/api/upload-lessons/', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${authCtx.access}`,
+                },
+                body: formData,
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                console.log(data)
+                throw new Error(data.message || 'خطا در آپلود فایل');
+            }
+
+            setExcelFile(null);
+            document.getElementById('excel-input').value = '';
+            
+        } catch (error) {
+             console.error('invalid:', error);
+        } finally {
+            setSendingFile(false);
+        }
+    };
+
     return (
         <div>
             <div className='AddBox'>
                 <InputBox type="text" value={deptid} onChange={changeidhandler} isValid={true} defualt='10' style={{ width: '15%', height: '50px', fontSize: '1.2rem' }}></InputBox>
                 <InputBox type="text" value={deptname} onChange={changenamehadndler} isValid={true} defualt='مهندسی کامپیتر' style={{ width: '55%', height: '50px', fontSize: '1.2rem' }}></InputBox>
-                <button className='SubmitBox' onClick={addDeptbutton}>Add Department</button>
+                <ButtonBox onClick={addDeptbutton} defualt='Add Department' loading={false}></ButtonBox>
             </div>
 
             <div className='AddBox'>
+                <InputBox type='file' value='addfile' onChange={handleFileChange} isValid={true} style={{ width: '40%', height: '28px' }}></InputBox>
+
                 <select 
                     value={selectedDept} 
                     onChange={handleDeptChange}
@@ -101,7 +154,7 @@ const AddDeptLesson = () => {
                     <option value=""> -- Department -- </option>
                     {departments && departments.length > 0 ? (
                         departments.map((dept) => (
-                            <option key={dept.id} value={dept.id}>
+                            <option key={dept.dept_id} value={dept.dept_id}>
                                 {dept.dept_name}
                             </option>
                         ))
@@ -109,6 +162,8 @@ const AddDeptLesson = () => {
                         <option disabled>هیچ دپارتمانی یافت نشد</option>
                     )}
                 </select>
+
+                <ButtonBox onClick={handlefileSubmit} defualt='Add Lessons' loading={sendingFile} style={{width: '30%', height: '50px'}}></ButtonBox>
             </div>
         </div>
     );

@@ -64,3 +64,12 @@ class  LessonSerializer(serializers.ModelSerializer):
             'gender': {'required': True},
             'times': {'required': True},
         }
+
+class ExcelUploadSerializer(serializers.Serializer):
+    department_id = serializers.IntegerField()
+    excel_file = serializers.FileField()
+
+    def validate_excel_file(self, value):
+        if not value.name.endswith(('.xlsx', '.xls')):
+            raise serializers.ValidationError("فرمت فایل باید اکسل باشد")
+        return value

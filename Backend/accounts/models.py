@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator, ValidationError
+import re
 
 # Create your models here.
 class MyUserManager(BaseUserManager):
@@ -50,7 +51,7 @@ class Department(models.Model):
         return self.dept_name
     
 class Instructor(models.Model):
-    instructor_name = models.CharField(max_length=50)
+    instructor_name = models.CharField(max_length=50, unique=True)
     departments = models.ManyToManyField(Department, related_name='instructors')
 
     def __str__(self):
@@ -86,12 +87,12 @@ class Lesson(models.Model):
             MaxValueValidator(1, message="Invalid Credit")
         ]
     )
-    capacity = models.IntegerField()
+    capacity = models.IntegerField(blank=True, null=True)
     gender = models.IntegerField(choices=GENDER_CHOICES, default=0)
     instructors_list = models.JSONField(default=list, blank=True, null=True)
-    times = models.JSONField(default=list)
+    times = models.JSONField(default=list, blank=True, null=True)
     exam_time = models.JSONField(default=list, blank=True, null=True)
-    description = models.TextField()
+    description = models.TextField(blank=True, null=True)
 
     def clean(self):
         """اعتبارسنجی زمان‌ها"""
@@ -99,7 +100,6 @@ class Lesson(models.Model):
             raise ValidationError({'times': 'فرمت زمان‌ها باید لیست باشد'})
         
         for idx, time_slot in enumerate(self.times):
-            # بررسی وجود فیلدهای required
             required_fields = ['day', 'start', 'end', 'isExerciseSolving']
             for field in required_fields:
                 if field not in time_slot:
@@ -107,23 +107,19 @@ class Lesson(models.Model):
                         'times': f'زمان {idx+1}: فیلد {field} الزامی است'
                     })
             
-            # بررسی روز
             if time_slot['day'] not in [0, 1, 2, 3, 4, 5, 6]:
                 raise ValidationError({
                     'times': f'زمان {idx+1}: روز باید بین 0 تا 6 باشد'
                 })
             
-            # بررسی زمان شروع و پایان
-            if time_slot['start'] < 0 or time_slot['start'] > 23:
+            # بررسی فرمت رشته زمان (باید شامل دو رقم ساعت، دو نقطه و دو رقم دقیقه باشد)
+            time_pattern = r'^([0-1]\d|2[0-3]):[0-5]\d$'
+            if not re.match(time_pattern, str(time_slot['start'])) or not re.match(time_pattern, str(time_slot['end'])):
                 raise ValidationError({
-                    'times': f'زمان {idx+1}: ساعت شروع باید بین 0 تا 23 باشد'
+                    'times': f'زمان {idx+1}: فرمت ساعت شروع یا پایان باید به صورت HH:MM باشد (مثلا 13:30)'
                 })
             
-            if time_slot['end'] < 0 or time_slot['end'] > 23:
-                raise ValidationError({
-                    'times': f'زمان {idx+1}: ساعت پایان باید بین 0 تا 23 باشد'
-                })
-            
+            # مقایسه رشته‌ها (در فرمت HH:MM کاملاً معتبر است)
             if time_slot['start'] >= time_slot['end']:
                 raise ValidationError({
                     'times': f'زمان {idx+1}: ساعت شروع باید از پایان کمتر باشد'
