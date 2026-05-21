@@ -84,6 +84,7 @@ class UploadLessonsExcelView(APIView):
             
             created_lessons = []
             changed_lessons = []
+            notchanged_lessons = []
             errors = []
             #cnt = 1
 
@@ -180,8 +181,12 @@ class UploadLessonsExcelView(APIView):
                             if lesson.description != description:
                                 lesson.description = description
                                 haschange = True
+                            lesson.full_clean()
+                            lesson.save()
                             if haschange == True:
                                 changed_lessons.append(lesson.lesson_id)
+                            if haschange == False:
+                                notchanged_lessons.append(lesson.lesson_id)
                         else:
                             lesson = Lesson(
                                 lesson_id=lesson_id,
@@ -196,10 +201,10 @@ class UploadLessonsExcelView(APIView):
                                 exam_time=exam_time,
                                 description=description
                             )
-                        
-                        lesson.full_clean()
-                        lesson.save()
-                        created_lessons.append(lesson.lesson_id)
+
+                            lesson.full_clean()
+                            lesson.save()
+                            created_lessons.append(lesson.lesson_id)
 
                     except ValidationError as ve:
                         errors.append(f"ردیف {index+1} (کد درس {lesson_id}): خطای اعتبارسنجی - {ve.message_dict}")
@@ -211,6 +216,7 @@ class UploadLessonsExcelView(APIView):
                 'message': f'{len(created_lessons)} درس با موفقیت پردازش شد',
                 'created_lessons': created_lessons,
                 'changed_lessons': changed_lessons,
+                'notchanged_lessons': notchanged_lessons,
                 'errors': errors
             }, status=status.HTTP_201_CREATED if len(errors) == 0 else status.HTTP_400_BAD_REQUEST)
 

@@ -1,4 +1,4 @@
-import {useState, useContext, useEffect} from 'react'
+import {useState, useContext, useEffect, useRef} from 'react'
 import './AddDeptLesson.css'
 import InputBox from '../../component/input_box/InputBox';
 import AuthContext from '../../store/Authentication/AuthContext';
@@ -13,6 +13,7 @@ const AddDeptLesson = () => {
     const [selectedDept, setSelectedDept] = useState('');
     const [excelFile, setExcelFile] = useState(null);
     const [sendingFile, setSendingFile] = useState(false);
+    const fileInputRef = useRef(null);
 
     const changeidhandler = (event) => {
         setDeptid(event.target.value.trim());
@@ -122,11 +123,16 @@ const AddDeptLesson = () => {
 
             if (!response.ok) {
                 console.log(data)
-                throw new Error(data.message || 'خطا در آپلود فایل');
+                throw new Error(data.error || data.message || 'خطا در آپلود فایل');
             }
 
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
+
+            console.log(data);
+
             setExcelFile(null);
-            document.getElementById('excel-input').value = '';
             
         } catch (error) {
              console.error('invalid:', error);
@@ -144,7 +150,7 @@ const AddDeptLesson = () => {
             </div>
 
             <div className='AddBox'>
-                <InputBox type='file' value='addfile' onChange={handleFileChange} isValid={true} style={{ width: '40%', height: '28px' }}></InputBox>
+                <InputBox type='file' ref={fileInputRef} value='addfile' onChange={handleFileChange} isValid={true} style={{ width: '40%', height: '28px' }}></InputBox>
 
                 <select 
                     value={selectedDept} 
