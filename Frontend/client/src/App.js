@@ -3,6 +3,7 @@ import './App.css';
 import { useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import AuthContext from '../src/store/Authentication/AuthContext'
+import VerifyEmail from './pages/login_signup_pages/VerifyEmail';
 import Login from './pages/login_signup_pages/Login'
 import SignUp from './pages/login_signup_pages/SignUp'
 import ForgotPassword from './pages/login_signup_pages/ForgotPassword';
@@ -42,6 +43,8 @@ function App() {
             {!authCtx.isLoggedIn && <Route path='/dashboard' element={<Navigate to="/login" />} />}
 
             {authCtx.isLoggedIn && <Route path='/admin' element={<AddDeptLesson />} />}
+
+            <Route path="/verify-email/:uidb64/:token" element={<VerifyEmail />} />
           </Routes>
           <p className='Made'>
             Made By <span className='quaalla'>Quaalla</span>

@@ -10,22 +10,73 @@ from .models import User, Department, Instructor, Lesson
 from .serializers import UserSerializer, DepartmentSerializer, InstructorSerializer, LessonSerializer, ExcelUploadSerializer
 from .utils import parse_instructors, parse_schedule_and_exam, normalize_fa_text
 from django.core.exceptions import ValidationError
+from .tokens import account_activation_token
 
-# Create your views here.
+# ایمپورت‌های جدید برای ساخت توکن امن و ارسال ایمیل
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.core.mail import send_mail
+from django.conf import settings
+
 class UserViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['post'], permission_classes=[AllowAny])
     def register(self, request):
-        serializer = UserSerializer(data = request.data)
+        serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return Response(
-                {"message": "ثبت نام با موفقیت ثبت شد."},
-                status=status.HTTP_201_CREATED
-            )
+            user = serializer.save()
+            
+            try:
+                # ۱. ساخت UID و توکن فعال‌سازی
+                uid = urlsafe_base64_encode(force_bytes(user.pk))
+                token = account_activation_token.make_token(user)
+                
+                # ۲. ساخت لینک فعال‌سازی برای فرانت‌اَند (مثلاً ری‌اکت روی پورت 3000)
+                frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+                activation_link = f"{frontend_url}/verify-email/{uid}/{token}/"
+                
+                # ۳. ارسال ایمیل به کاربر
+                subject = 'تایید حساب کاربری - سامانه دانشگاه'
+                message = f"با سلام،\nلطفاً برای فعال‌سازی حساب کاربری خود روی لینک زیر کلیک کنید:\n\n{activation_link}"
+                
+                send_mail(
+                    subject,
+                    message,
+                    'noreply@university.com',
+                    [user.email],
+                    fail_silently=False,
+                )
+                
+                return Response(
+                    {"message": "ثبت‌نام با موفقیت انجام شد. لینک فعال‌سازی به ایمیل شما ارسال گردید."},
+                    status=status.HTTP_201_CREATED
+                )
+            except Exception as e:
+                # در صورت خطا در ارسال ایمیل، کاربر غیرفعال حذف می‌شود تا بتواند مجدد تلاش کند
+                user.delete()
+                return Response({"error": f"خطا در ارسال ایمیل فعال‌سازی: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
-    @action(detail=False, methods=['get'],  permission_classes=[IsAuthenticated])
+    # اکشن جدید برای دریافت توکن از فرانت و فعال‌سازی کاربر
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny], url_path='verify-email/(?P<uidb64>[^/.]+)/(?P<token>[^/.]+)')
+    def verify_email(self, request, uidb64=None, token=None):
+        try:
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            user = None
+
+        if user is not None and account_activation_token.check_token(user, token):
+            if user.is_active:
+                return Response({'message': 'این حساب کاربری قبلاً فعال شده است.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            user.is_active = True
+            user.save()
+            return Response({'message': 'حساب کاربری شما با موفقیت فعال شد. اکنون می‌توانید لاگین کنید.'}, status=status.HTTP_200_OK)
+        
+        return Response({'error': 'لینک تایید نامعتبر یا منقضی شده است.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def profile(self, request):
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
@@ -86,36 +137,25 @@ class UploadLessonsExcelView(APIView):
             changed_lessons = []
             notchanged_lessons = []
             errors = []
-            #cnt = 1
 
             with transaction.atomic():
                 for index, row in df.iterrows():
                     try:
-                        # ۱. تبدیل شماره و گروه درس (مثلاً تبدیل 1710105_01 به 171010501)
                         lesson_id_raw = str(row.iloc[0]).strip() if pd.notna(row.iloc[0]) else ""
-                        lesson_id = lesson_id_raw.replace('_', '') # حذف خط تیره
+                        lesson_id = lesson_id_raw.replace('_', '')
                         
                         if not lesson_id:
                             continue
 
-                        # ۲. نام درس
                         lesson_name = str(row.iloc[1]).strip() if pd.notna(row.iloc[1]) else ""
-                        
-                        # ۳. تعداد واحد (کل)
                         credit = int(row.iloc[2]) if pd.notna(row.iloc[2]) else 0
-
-                        # ۴. تعداد واحد عملی
                         active_credit = float(row.iloc[3]) if pd.notna(row.iloc[3]) else 0.0
-                        
-                        # ۵. ظرفیت
                         capacity = int(row.iloc[4]) if pd.notna(row.iloc[4]) else 0
                         
-                        # ۶. جنسیت
                         gender_text = str(row.iloc[7]).strip() if pd.notna(row.iloc[6]) else "مختلط"
                         gender_map = {'مختلط': 0, 'مرد': 1, 'زن': 2}
                         gender = gender_map.get(gender_text, 0)
                         
-                        # ۷. اساتید (ایندکس ۸ - ستون نوع مسئولیت استاد)
                         instructor_resp_column = row.iloc[10] if len(row) > 8 else ""
                         instructor_resp_column = normalize_fa_text(instructor_resp_column)
                         instructors_list = parse_instructors(instructor_resp_column)
@@ -123,33 +163,16 @@ class UploadLessonsExcelView(APIView):
                         if not instructors_list and pd.notna(row.iloc[6]):
                             instructors_list = [str(row.iloc[6]).strip()]
 
-                        # ۸. زمان کلاس، مکان و اطلاعات امتحان (ایندکس ۱۰ - ستون زمان و مکان)
                         schedule_column_text = row.iloc[11] if len(row) > 5 else ""
                         schedule_column_text = normalize_fa_text(schedule_column_text)
                         times, exam_time = parse_schedule_and_exam(schedule_column_text)
                         
-                        # ۹. توضیحات (ایندکس ۱۱ - ستون توضیحات)
                         description = normalize_fa_text(row.iloc[12]) if len(row) > 5 and pd.notna(row.iloc[12]) else ""
 
                         if (int(int(lesson_id)) // 10000000 != department_id):
                             continue
 
-                        # بررسی وجود یا آپدیت درس
                         lesson = Lesson.objects.filter(lesson_id=lesson_id, department_id=department).first()
-
-                        #print(cnt)
-                        #cnt += 1
-                        print(lesson_id)
-                        print(lesson_name)
-                        print(department)
-                        print(credit)
-                        print(active_credit)
-                        print(capacity)
-                        print(gender)
-                        print(instructors_list)
-                        print(times)
-                        print(exam_time)
-                        print(description)
 
                         haschange = False
                         
@@ -201,7 +224,6 @@ class UploadLessonsExcelView(APIView):
                                 exam_time=exam_time,
                                 description=description
                             )
-
                             lesson.full_clean()
                             lesson.save()
                             created_lessons.append(lesson.lesson_id)

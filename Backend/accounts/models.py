@@ -3,7 +3,6 @@ from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.core.validators import MinValueValidator, MaxValueValidator, ValidationError
 import re
 
-# Create your models here.
 class MyUserManager(BaseUserManager):
     def create_user(self, student_no, password=None, **extra_fields):
         if not student_no:
@@ -11,6 +10,8 @@ class MyUserManager(BaseUserManager):
         
         if 'email' in extra_fields:
             extra_fields['email'] = self.normalize_email(extra_fields['email'])
+
+        extra_fields.setdefault('is_active', False)
 
         user = self.model(student_no=student_no, **extra_fields)
         user.set_password(password)
@@ -20,7 +21,7 @@ class MyUserManager(BaseUserManager):
     def create_superuser(self, student_no, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
-        extra_fields.setdefault('is_active', True)
+        extra_fields.setdefault('is_active', True) # سوپر یوزر باید از ابتدا فعال باشد
 
         if extra_fields.get('is_staff') is not True:
             raise ValueError('Superuser must have is_staff=True.')
@@ -33,6 +34,7 @@ class User(AbstractUser):
     student_no = models.CharField(max_length=8, unique=True)
     phone = models.CharField(max_length=11, null=True, blank=True)
     email = models.EmailField(blank=False, null=False)
+    is_active = models.BooleanField(default=False) # فیلد وضعیت فعال بودن
 
     username = None
     USERNAME_FIELD = 'student_no'
@@ -63,30 +65,11 @@ class Lesson(models.Model):
         (1, 'مرد'),
         (2, 'زن'),
     ]
-    DAY_CHOICES = [
-        (0, 'شنبه'),
-        (1, 'یکشنبه'),
-        (2, 'دوشنبه'),
-        (3, 'سه‌شنبه'),
-        (4, 'چهارشنبه'),
-        (5, 'پنجشنبه'),
-        (6, 'جمعه'),
-    ]
     lesson_id = models.CharField(max_length=10, unique=True)
     lesson_name = models.CharField(max_length=100)
     department_id = models.ForeignKey(Department, on_delete=models.CASCADE, related_name='lessons')
-    credit = models.IntegerField(validators=[
-        MinValueValidator(0, message="Invalid Credit"),
-        MaxValueValidator(4, message="Invalid Credit")
-    ])
-    active_credit = models.DecimalField(
-        max_digits=3,
-        decimal_places=1,
-        validators=[
-            MinValueValidator(0, message="Invalid Credit"),
-            MaxValueValidator(1, message="Invalid Credit")
-        ]
-    )
+    credit = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(4)])
+    active_credit = models.DecimalField(max_digits=3, decimal_places=1, validators=[MinValueValidator(0), MaxValueValidator(1)])
     capacity = models.IntegerField(blank=True, null=True)
     gender = models.IntegerField(choices=GENDER_CHOICES, default=0)
     instructors_list = models.JSONField(default=list, blank=True, null=True)
@@ -95,40 +78,24 @@ class Lesson(models.Model):
     description = models.TextField(blank=True, null=True)
 
     def clean(self):
-        """اعتبارسنجی زمان‌ها"""
         if not isinstance(self.times, list):
             raise ValidationError({'times': 'فرمت زمان‌ها باید لیست باشد'})
-        
         for idx, time_slot in enumerate(self.times):
             required_fields = ['day', 'start', 'end', 'isExerciseSolving']
             for field in required_fields:
                 if field not in time_slot:
-                    raise ValidationError({
-                        'times': f'زمان {idx+1}: فیلد {field} الزامی است'
-                    })
-            
+                    raise ValidationError({'times': f'زمان {idx+1}: فیلد {field} الزامی است'})
             if time_slot['day'] not in [0, 1, 2, 3, 4, 5, 6]:
-                raise ValidationError({
-                    'times': f'زمان {idx+1}: روز باید بین 0 تا 6 باشد'
-                })
-            
-            # بررسی فرمت رشته زمان (باید شامل دو رقم ساعت، دو نقطه و دو رقم دقیقه باشد)
+                raise ValidationError({'times': f'زمان {idx+1}: روز باید بین 0 تا 6 باشد'})
             time_pattern = r'^([0-1]\d|2[0-3]):[0-5]\d$'
             if not re.match(time_pattern, str(time_slot['start'])) or not re.match(time_pattern, str(time_slot['end'])):
-                raise ValidationError({
-                    'times': f'زمان {idx+1}: فرمت ساعت شروع یا پایان باید به صورت HH:MM باشد (مثلا 13:30)'
-                })
-            
-            # مقایسه رشته‌ها (در فرمت HH:MM کاملاً معتبر است)
+                raise ValidationError({'times': f'زمان {idx+1}: فرمت ساعت شروع یا پایان باید به صورت HH:MM باشد'})
             if time_slot['start'] >= time_slot['end']:
-                raise ValidationError({
-                    'times': f'زمان {idx+1}: ساعت شروع باید از پایان کمتر باشد'
-                })
+                raise ValidationError({'times': f'زمان {idx+1}: ساعت شروع باید از پایان کمتر باشد'})
             
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
     
     def __str__(self):
-        return f"{self.lesson_id} - {self.lesson_name}" 
-    
+        return f"{self.lesson_id} - {self.lesson_name}"

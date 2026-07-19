@@ -86,7 +86,7 @@ const Login = () => {
             Hasreturned = true;
         }
         setLoginInput((prevState) => {
-            return {...prevState, enteredPass: StudentNo}
+            return {...prevState, enteredPass: pass}
         })
 
         if (Hasreturned){

@@ -6,13 +6,14 @@ import ButtonBox from '../../component/button/ButtonBox';
 
 const AddDeptLesson = () => {
     const authCtx = useContext(AuthContext);
-    const [deptid, setDeptid] = useState('00');
-    const [deptname, setDeptname] = useState([]);
+    const [deptid, setDeptid] = useState('');
+    const [deptname, setDeptname] = useState('');
     const [departments, setDepartments] = useState(null);
     const [counter, setCounter] = useState(0);
     const [selectedDept, setSelectedDept] = useState('');
     const [excelFile, setExcelFile] = useState(null);
     const [sendingFile, setSendingFile] = useState(false);
+    const [addingDept, setAddingDept] = useState(false);
     const fileInputRef = useRef(null);
 
     const changeidhandler = (event) => {
@@ -20,17 +21,17 @@ const AddDeptLesson = () => {
     };
 
     const changenamehadndler = (event) => {
-        setDeptname(event.target.value.trim());
+        setDeptname(event.target.value); 
     };
 
     const addDeptbutton = async () => {
         if (deptid.length !== 2) return;
-        if (deptname.length === 0) return;
+        if (deptname.trim().length === 0) return;
 
-        console.log(deptid + ' ' + deptname);
+        setAddingDept(true);
 
-        try{
-            const respone = await fetch('http://127.0.0.1:8000/api/department/', {
+        try {
+            const response = await fetch('http://127.0.0.1:8000/api/department/', {
                 method:'POST',
                 headers: {
                     "Content-Type": "application/json",
@@ -38,21 +39,23 @@ const AddDeptLesson = () => {
                 },
                 body: JSON.stringify({
                     dept_id: parseInt(deptid),
-                    dept_name: deptname
+                    dept_name: deptname.trim()
                 }),
             });
-            const data = await respone.json()
             
-            if (!respone.ok) {
+            if (!response.ok) {
                 throw new Error('sth went wrong!');
             }
 
             console.log('valid');
-            setCounter(counter+1);
+            setDeptid('');
+            setDeptname('');
+            setCounter(counter + 1);
         } catch(error) {
             console.error('invalid:', error);
+        } finally {
+            setAddingDept(false);
         }
-        return;
     };
 
     useEffect(() => {
@@ -73,7 +76,6 @@ const AddDeptLesson = () => {
                 }
 
                 setDepartments(data);
-                console.log(data);
                 
             } catch(error) {
                 console.error('invalid:', error);
@@ -85,7 +87,6 @@ const AddDeptLesson = () => {
 
     const handleDeptChange = (event) => {
         setSelectedDept(event.target.value);
-        console.log('Department selected:', event.target.value);
     };
 
     const handleFileChange = (event) => {
@@ -99,13 +100,10 @@ const AddDeptLesson = () => {
     };
 
     const handlefileSubmit = async () => {
-        if (!selectedDept) return;
-        
-        if (!excelFile) return;
+        if (!selectedDept || !excelFile) return;
 
         setSendingFile(true);
 
-        // ایجاد FormData برای ارسال فایل
         const formData = new FormData();
         formData.append('department_id', selectedDept);
         formData.append('excel_file', excelFile);
@@ -122,7 +120,6 @@ const AddDeptLesson = () => {
             const data = await response.json();
 
             if (!response.ok) {
-                console.log(data)
                 throw new Error(data.error || data.message || 'خطا در آپلود فایل');
             }
 
@@ -130,9 +127,8 @@ const AddDeptLesson = () => {
                 fileInputRef.current.value = '';
             }
 
-            console.log(data);
-
             setExcelFile(null);
+            setSelectedDept('');
             
         } catch (error) {
              console.error('invalid:', error);
@@ -145,12 +141,12 @@ const AddDeptLesson = () => {
         <div>
             <div className='AddBox'>
                 <InputBox type="text" value={deptid} onChange={changeidhandler} isValid={true} defualt='10' style={{ width: '15%', height: '50px', fontSize: '1.2rem' }}></InputBox>
-                <InputBox type="text" value={deptname} onChange={changenamehadndler} isValid={true} defualt='مهندسی کامپیتر' style={{ width: '55%', height: '50px', fontSize: '1.2rem' }}></InputBox>
-                <ButtonBox onClick={addDeptbutton} defualt='Add Department' loading={false}></ButtonBox>
+                <InputBox type="text" value={deptname} onChange={changenamehadndler} isValid={true} defualt='مهندسی کامپیوتر' style={{ width: '55%', height: '50px', fontSize: '1.2rem' }}></InputBox>
+                <ButtonBox onClick={addDeptbutton} defualt='Add Department' loading={addingDept}></ButtonBox>
             </div>
 
             <div className='AddBox'>
-                <InputBox type='file' ref={fileInputRef} value='addfile' onChange={handleFileChange} isValid={true} style={{ width: '40%', height: '28px' }}></InputBox>
+                <InputBox type='file' ref={fileInputRef} onChange={handleFileChange} isValid={true} style={{ width: '40%', height: '28px' }}></InputBox>
 
                 <select 
                     value={selectedDept} 
@@ -175,4 +171,4 @@ const AddDeptLesson = () => {
     );
 };
 
-export default AddDeptLesson
+export default AddDeptLesson;

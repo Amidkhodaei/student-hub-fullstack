@@ -1,6 +1,7 @@
 import { useContext, useState } from 'react';
 import './MainHeader.css'
 import AuthContext from '../../store/Authentication/AuthContext';
+import { Link } from 'react-router-dom';
 
 const MainHeader = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -28,10 +29,10 @@ const MainHeader = () => {
                 <nav className='navbar'> 
                     <ul>
                         
-                        <li><a href='/comments'>نظرات و پیشنهادات</a></li>
-                        <li><a href='/survey'>نظرسنجی اساتید</a></li>
-                        <li><a href='/terminder'>ترمایندر</a></li>
-                        <li><a href='/dashboard' className='home_link'>خانه</a></li>
+                        <li><Link to={'/comments'}>نظرات و پیشنهادات</Link></li>
+                        <li><Link to={'/survey'}>نظرسنجی اساتید</Link></li>
+                        <li><Link to={'/terminder'}>ترمایندر</Link></li>
+                        <li><Link to={'/dashboard'} className='home_link'>خانه</Link></li>
                     </ul>
                 </nav>
             </div>
