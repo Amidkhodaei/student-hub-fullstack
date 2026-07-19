@@ -7,9 +7,11 @@ from rest_framework.response import Response
 import pandas as pd
 from django.db import transaction
 from .models import User, Department, Instructor, Lesson
+from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import (
     UserSerializer, DepartmentSerializer, InstructorSerializer, LessonSerializer,
     ExcelUploadSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer,
+    CustomTokenObtainPairSerializer,
 )
 from .utils import parse_instructors, parse_schedule_and_exam, normalize_fa_text
 from django.core.exceptions import ValidationError
@@ -50,7 +52,7 @@ class UserViewSet(viewsets.ViewSet):
                 )
                 
                 return Response(
-                    {"message": ".ثبت‌نام با موفقیت انجام شد. لینک فعال‌سازی به ایمیل شما ارسال گردید"},
+                    {"message": "ثبت‌نام با موفقیت انجام شد. لینک فعال‌سازی به ایمیل شما ارسال گردید"},
                     status=status.HTTP_201_CREATED
                 )
             except Exception as e:
@@ -71,13 +73,13 @@ class UserViewSet(viewsets.ViewSet):
 
         if user is not None and account_activation_token.check_token(user, token):
             if user.is_active:
-                return Response({'message': '.این حساب کاربری قبلاً فعال شده است'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'message': 'این حساب کاربری قبلاً فعال شده است'}, status=status.HTTP_400_BAD_REQUEST)
             
             user.is_active = True
             user.save()
-            return Response({'message': '.حساب کاربری شما با موفقیت فعال شد. اکنون می‌توانید لاگین کنید'}, status=status.HTTP_200_OK)
+            return Response({'message': 'حساب کاربری شما با موفقیت فعال شد. اکنون می‌توانید لاگین کنید'}, status=status.HTTP_200_OK)
         
-        return Response({'error': '.لینک تایید نامعتبر یا منقضی شده است'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'لینک تایید نامعتبر یا منقضی شده است'}, status=status.HTTP_400_BAD_REQUEST)
         
     @action(detail=False, methods=['post'], permission_classes=[AllowAny], url_path='request-password-reset')
     def request_password_reset(self, request):
@@ -114,6 +116,8 @@ class UserViewSet(viewsets.ViewSet):
                 fail_silently=False,
             )
         except Exception:
+            # حتی اگر ارسال ایمیل خطا بدهد، پیام عمومی را برمی‌گردانیم
+            # تا اطلاعاتی درباره‌ی وجود/عدم‌وجود کاربر فاش نشود.
             pass
 
         return generic_response
@@ -127,7 +131,7 @@ class UserViewSet(viewsets.ViewSet):
             user = None
 
         if user is None or not password_reset_token.check_token(user, token):
-            return Response({'error': '.لینک بازنشانی رمز عبور نامعتبر یا منقضی شده است'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'لینک بازنشانی رمز عبور نامعتبر یا منقضی شده است'}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = PasswordResetConfirmSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -135,7 +139,7 @@ class UserViewSet(viewsets.ViewSet):
         user.set_password(serializer.validated_data['new_password1'])
         user.save()
 
-        return Response({'message': '.رمز عبور شما با موفقیت تغییر کرد. اکنون می‌توانید با رمز جدید وارد شوید'}, status=status.HTTP_200_OK)
+        return Response({'message': 'رمز عبور شما با موفقیت تغییر کرد. اکنون می‌توانید با رمز جدید وارد شوید'}, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def profile(self, request):
@@ -267,10 +271,16 @@ class UploadLessonsExcelView(APIView):
                                 haschange = True
                             lesson.full_clean()
                             lesson.save()
+                            lesson_report = {
+                                'lesson_id': lesson.lesson_id,
+                                'lesson_name': lesson.lesson_name,
+                                'instructors': lesson.instructors_list,
+                                'credit': lesson.credit,
+                            }
                             if haschange == True:
-                                changed_lessons.append(lesson.lesson_id)
+                                changed_lessons.append(lesson_report)
                             if haschange == False:
-                                notchanged_lessons.append(lesson.lesson_id)
+                                notchanged_lessons.append(lesson_report)
                         else:
                             lesson = Lesson(
                                 lesson_id=lesson_id,
@@ -287,16 +297,27 @@ class UploadLessonsExcelView(APIView):
                             )
                             lesson.full_clean()
                             lesson.save()
-                            created_lessons.append(lesson.lesson_id)
+                            created_lessons.append({
+                                'lesson_id': lesson.lesson_id,
+                                'lesson_name': lesson.lesson_name,
+                                'instructors': lesson.instructors_list,
+                                'credit': lesson.credit,
+                            })
 
                     except ValidationError as ve:
                         errors.append(f"ردیف {index+1} (کد درس {lesson_id}): خطای اعتبارسنجی - {ve.message_dict}")
                     except Exception as row_error:
                         errors.append(f"ردیف {index+1}: خطای پردازش داده - {str(row_error)}")
 
+            summary_message = (
+                f'{len(created_lessons)} درس جدید اضافه شد، '
+                f'{len(changed_lessons)} درس به‌روزرسانی شد، '
+                f'{len(notchanged_lessons)} درس بدون تغییر بود.'
+            )
+
             return Response({
                 'success': len(errors) == 0,
-                'message': f'{len(created_lessons)} درس با موفقیت پردازش شد',
+                'message': summary_message,
                 'created_lessons': created_lessons,
                 'changed_lessons': changed_lessons,
                 'notchanged_lessons': notchanged_lessons,
@@ -307,3 +328,6 @@ class UploadLessonsExcelView(APIView):
             return Response({
                 'error': f"خطای سیستمی: {str(e)}"
             }, status=status.HTTP_400_BAD_REQUEST)
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer

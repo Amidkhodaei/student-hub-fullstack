@@ -42,8 +42,16 @@ function App() {
             
             {authCtx.isLoggedIn && <Route path='/dashboard' element={<MainPage />} />}
             {!authCtx.isLoggedIn && <Route path='/dashboard' element={<Navigate to="/login" />} />}
+            {!authCtx.isLoggedIn && <Route path='/terminder' element={<Navigate to="/login" />} />}
+            {!authCtx.isLoggedIn && <Route path='/survey' element={<Navigate to="/login" />} />}
+            {!authCtx.isLoggedIn && <Route path='/comments' element={<Navigate to="/login" />} />}
 
-            {authCtx.isLoggedIn && <Route path='/admin' element={<AddDeptLesson />} />}
+            {authCtx.isLoggedIn && authCtx.isStaff &&
+              <Route path='/admin' element={<AddDeptLesson />} />}
+            {authCtx.isLoggedIn && !authCtx.isStaff &&
+              <Route path='/admin' element={<Navigate to="/dashboard" />} />}
+            {!authCtx.isLoggedIn &&
+              <Route path='/admin' element={<Navigate to="/login" />} />}
 
             <Route path="/verify-email/:uidb64/:token" element={<VerifyEmail />} />
             <Route path="/reset-password/:uidb64/:token" element={<ResetPassword />} />

@@ -32,6 +32,8 @@ const MainHeader = () => {
                         <li><Link to={'/comments'}>نظرات و پیشنهادات</Link></li>
                         <li><Link to={'/survey'}>نظرسنجی اساتید</Link></li>
                         <li><Link to={'/terminder'}>ترمایندر</Link></li>
+                        {authCtx.isStaff &&
+                            <li><Link to={'/admin'}>پنل ادمین</Link></li>}
                         <li><Link to={'/dashboard'} className='home_link'>خانه</Link></li>
                     </ul>
                 </nav>

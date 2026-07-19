@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import User, Department, Instructor, Lesson
 
 class UserSerializer(serializers.ModelSerializer):
@@ -79,6 +80,15 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         if len(attrs['new_password1']) < 6:
             raise serializers.ValidationError({'new_password1': 'رمز عبور باید حداقل ۶ کاراکتر باشد'})
         return attrs
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token['is_staff'] = user.is_staff
+        token['fullname'] = f"{user.first_name} {user.last_name}"
+        return token
 
 
 class ExcelUploadSerializer(serializers.Serializer):

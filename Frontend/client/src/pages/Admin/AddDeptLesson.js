@@ -2,10 +2,13 @@ import {useState, useContext, useEffect, useRef} from 'react'
 import './AddDeptLesson.css'
 import InputBox from '../../component/input_box/InputBox';
 import AuthContext from '../../store/Authentication/AuthContext';
+import ToastContext from '../../store/Toast/ToastContext';
 import ButtonBox from '../../component/button/ButtonBox';
+import UploadReport from './UploadReport';
 
 const AddDeptLesson = () => {
     const authCtx = useContext(AuthContext);
+    const { showToast } = useContext(ToastContext);
     const [deptid, setDeptid] = useState('');
     const [deptname, setDeptname] = useState('');
     const [departments, setDepartments] = useState(null);
@@ -14,6 +17,7 @@ const AddDeptLesson = () => {
     const [excelFile, setExcelFile] = useState(null);
     const [sendingFile, setSendingFile] = useState(false);
     const [addingDept, setAddingDept] = useState(false);
+    const [uploadReport, setUploadReport] = useState(null);
     const fileInputRef = useRef(null);
 
     const changeidhandler = (event) => {
@@ -44,15 +48,17 @@ const AddDeptLesson = () => {
             });
             
             if (!response.ok) {
-                throw new Error('sth went wrong!');
+                const data = await response.json().catch(() => ({}));
+                const firstError = data.error || data.message || Object.values(data)?.[0]?.[0];
+                throw new Error(firstError || 'افزودن دپارتمان انجام نشد.');
             }
 
-            console.log('valid');
+            showToast('دپارتمان با موفقیت اضافه شد.', 'success');
             setDeptid('');
             setDeptname('');
             setCounter(counter + 1);
         } catch(error) {
-            console.error('invalid:', error);
+            showToast(error.message || 'افزودن دپارتمان انجام نشد.', 'error');
         } finally {
             setAddingDept(false);
         }
@@ -103,6 +109,7 @@ const AddDeptLesson = () => {
         if (!selectedDept || !excelFile) return;
 
         setSendingFile(true);
+        setUploadReport(null);
 
         const formData = new FormData();
         formData.append('department_id', selectedDept);
@@ -119,9 +126,17 @@ const AddDeptLesson = () => {
 
             const data = await response.json();
 
-            if (!response.ok) {
+            // اگر پاسخ ساختار گزارش (created/changed/notchanged) را داشته باشد،
+            // یعنی حداقل بخشی از فایل پردازش شده—even اگر برخی ردیف‌ها خطا داشته باشند.
+            const hasReportShape =
+                data && (data.created_lessons || data.changed_lessons || data.notchanged_lessons || data.errors);
+
+            if (!response.ok && !hasReportShape) {
                 throw new Error(data.error || data.message || 'خطا در آپلود فایل');
             }
+
+            setUploadReport(data);
+            showToast(data.message || 'دروس با موفقیت پردازش شدند', data.success ? 'success' : 'error');
 
             if (fileInputRef.current) {
                 fileInputRef.current.value = '';
@@ -131,7 +146,7 @@ const AddDeptLesson = () => {
             setSelectedDept('');
             
         } catch (error) {
-             console.error('invalid:', error);
+            showToast(error.message || 'خطا در آپلود فایل. لطفاً دوباره تلاش کنید', 'error');
         } finally {
             setSendingFile(false);
         }
@@ -167,6 +182,8 @@ const AddDeptLesson = () => {
 
                 <ButtonBox onClick={handlefileSubmit} defualt='Add Lessons' loading={sendingFile} style={{width: '30%', height: '50px'}}></ButtonBox>
             </div>
+
+            <UploadReport report={uploadReport} />
         </div>
     );
 };

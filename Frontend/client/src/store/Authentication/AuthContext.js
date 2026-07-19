@@ -6,12 +6,23 @@ const AuthContext = React.createContext({
     accessExp: null,
     refreshExp: null,
     isLoggedIn: false,
+    isStaff: false,
+    fullname: '',
     login: (access, refresh) => {},
     logout: () => {}
 });
 
 const calculateRemainingTime = (expirationTime) => {
     return expirationTime - Date.now();
+};
+
+const decodeAccessToken = (token) => {
+    if (!token) return null;
+    try {
+        return JSON.parse(atob(token.split(".")[1]));
+    } catch (_) {
+        return null;
+    }
 };
 
 
@@ -32,6 +43,9 @@ export const AuthContextProvider = (props) => {
     const [refreshExp, setRefreshExp] = useState(initialRefreshExp);
 
     const userIsLoggedIn = !!access; 
+    const decodedAccess = decodeAccessToken(access);
+    const isStaff = !!decodedAccess?.is_staff;
+    const fullname = decodedAccess?.fullname || '';
 
     const refreshAccessToken = async () => {
         if (!refresh) {
@@ -129,6 +143,8 @@ export const AuthContextProvider = (props) => {
         accessExp,
         refreshExp,
         isLoggedIn: userIsLoggedIn,
+        isStaff,
+        fullname,
         login: loginHandler,
         logout: logoutHandler
     }
