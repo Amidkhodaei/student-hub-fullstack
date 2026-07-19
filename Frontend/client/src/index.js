@@ -4,13 +4,16 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { AuthContextProvider } from './store/Authentication/AuthContext';
+import { ToastContextProvider } from './store/Toast/ToastContext';
 import { BrowserRouter } from 'react-router-dom'
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-  <AuthContextProvider>
-      <App />
-  </AuthContextProvider>
+  <ToastContextProvider>
+    <AuthContextProvider>
+        <App />
+    </AuthContextProvider>
+  </ToastContextProvider>
 );
 
 // If you want to start measuring performance in your app, pass a function

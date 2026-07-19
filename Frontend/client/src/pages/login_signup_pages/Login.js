@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import './Login.css'
 import InputBox from '../../component/input_box/InputBox';
 import AuthContext from '../../store/Authentication/AuthContext';
+import ToastContext from '../../store/Toast/ToastContext';
 
 const Login = () => {
     const [loginInput, setLoginInput] = useState({
@@ -16,8 +17,10 @@ const Login = () => {
         });
     const [activeSubmit, setActiveSubmit] = useState(true)
     const [loading, setLoading] = useState(false);
+    const [loginError, setLoginError] = useState('');
     const Navigate = useNavigate();
     const authCtx = useContext(AuthContext);
+    const { showToast } = useContext(ToastContext);
 
     const studentnochangehandler = (event) => {
         if (event.target.value.trim().length > 8 || event.target.value.trim().length < 7 || !/^\d+$/.test(event.target.value.trim())) {
@@ -94,6 +97,7 @@ const Login = () => {
         }
 
         setLoading(true);
+        setLoginError('');
         try
         {
             const respone = await fetch('http://127.0.0.1:8000/api/login/', {
@@ -109,7 +113,7 @@ const Login = () => {
             const data = await respone.json()
             
             if (!respone.ok) {
-                throw new Error('sth went wrong!');
+                throw new Error(data.detail || 'شماره دانشجویی یا رمز عبور اشتباه است');
             }
 
             const accessPayload = JSON.parse(atob(data.access.split(".")[1]));
@@ -125,9 +129,12 @@ const Login = () => {
             console.log("Refresh expires:", refreshExpDate);
 
             authCtx.login(data.access, data.refresh, accessExpDate, refreshExpDate);
+            showToast('ورود با موفقیت انجام شد', 'success');
             Navigate("/dashboard");
         } catch(error) {
-            console.log('invalid');
+            const errMessage = error.message || 'ورود ناموفق بود. لطفاً دوباره تلاش کنید';
+            setLoginError(errMessage);
+            showToast(errMessage, 'error');
         }
         setLoading(false);
     }
@@ -139,7 +146,7 @@ const Login = () => {
             {!loading && <button className='button' disabled={!activeSubmit} onClick={submithandler}> ورود </button>}
             {loading && <p style={{color: 'white'}}> Loading... </p>}
             <div className='option'>
-                <Link  className='text'>فراموشی رمز عبور</Link>
+                <Link to="/forgotpassword" className='text'>فراموشی رمز عبور</Link>
                 <Link to="/signup" className='text'>ساخت اکانت جدید</Link>
             </div>
         </div>

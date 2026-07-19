@@ -1,9 +1,12 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useContext} from 'react';
 import './SignUp.css'
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import InputBox from '../../component/input_box/InputBox';
+import ToastContext from '../../store/Toast/ToastContext';
 
 const SignUp = () => {
+    const { showToast } = useContext(ToastContext);
+    const navigate = useNavigate();
     const [signUpInput, setSignUpInput] = useState({
         enteredStudentNo: '',
         enteredFirstName: '',
@@ -173,8 +176,8 @@ const SignUp = () => {
             return {...prevState, enteredPass1: pass2}
         })
 
-        if (signUpInput.enteredPass1.trim() != signUpInput.enteredPass2.trim() || Hasreturned){
-            console.log('invalid');
+        if (signUpInput.enteredPass1.trim() !== signUpInput.enteredPass2.trim() || Hasreturned){
+            showToast('لطفاً اطلاعات فرم را به‌درستی تکمیل کنید', 'error');
             return ;
         }
 
@@ -196,14 +199,16 @@ const SignUp = () => {
                 }),
             });
             const data = await respone.json()
-            
+
             if (!respone.ok) {
-                throw new Error('sth went wrong!');
+                const firstError = data.error || data.message || Object.values(data)?.[0]?.[0];
+                throw new Error(firstError || 'ثبت‌نام انجام نشد. لطفاً دوباره تلاش کنید');
             }
 
-            console.log('valid');
+            showToast(data.message || 'ثبت‌نام با موفقیت انجام شد. لینک فعال‌سازی به ایمیل شما ارسال گردید', 'success');
+            navigate('/login');
         } catch(error) {
-            console.log('invalid');
+            showToast(error.message || 'ثبت‌نام انجام نشد. لطفاً دوباره تلاش کنید', 'error');
         }
         setLoading(false)
     }

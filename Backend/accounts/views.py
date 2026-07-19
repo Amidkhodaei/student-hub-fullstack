@@ -7,10 +7,13 @@ from rest_framework.response import Response
 import pandas as pd
 from django.db import transaction
 from .models import User, Department, Instructor, Lesson
-from .serializers import UserSerializer, DepartmentSerializer, InstructorSerializer, LessonSerializer, ExcelUploadSerializer
+from .serializers import (
+    UserSerializer, DepartmentSerializer, InstructorSerializer, LessonSerializer,
+    ExcelUploadSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer,
+)
 from .utils import parse_instructors, parse_schedule_and_exam, normalize_fa_text
 from django.core.exceptions import ValidationError
-from .tokens import account_activation_token
+from .tokens import account_activation_token, password_reset_token
 
 # ایمپورت‌های جدید برای ساخت توکن امن و ارسال ایمیل
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -47,7 +50,7 @@ class UserViewSet(viewsets.ViewSet):
                 )
                 
                 return Response(
-                    {"message": "ثبت‌نام با موفقیت انجام شد. لینک فعال‌سازی به ایمیل شما ارسال گردید."},
+                    {"message": ".ثبت‌نام با موفقیت انجام شد. لینک فعال‌سازی به ایمیل شما ارسال گردید"},
                     status=status.HTTP_201_CREATED
                 )
             except Exception as e:
@@ -68,14 +71,72 @@ class UserViewSet(viewsets.ViewSet):
 
         if user is not None and account_activation_token.check_token(user, token):
             if user.is_active:
-                return Response({'message': 'این حساب کاربری قبلاً فعال شده است.'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'message': '.این حساب کاربری قبلاً فعال شده است'}, status=status.HTTP_400_BAD_REQUEST)
             
             user.is_active = True
             user.save()
-            return Response({'message': 'حساب کاربری شما با موفقیت فعال شد. اکنون می‌توانید لاگین کنید.'}, status=status.HTTP_200_OK)
+            return Response({'message': '.حساب کاربری شما با موفقیت فعال شد. اکنون می‌توانید لاگین کنید'}, status=status.HTTP_200_OK)
         
-        return Response({'error': 'لینک تایید نامعتبر یا منقضی شده است.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': '.لینک تایید نامعتبر یا منقضی شده است'}, status=status.HTTP_400_BAD_REQUEST)
         
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny], url_path='request-password-reset')
+    def request_password_reset(self, request):
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        student_no = serializer.validated_data['student_no']
+
+        # پیام موفقیت همیشه یکسان است تا نشود فهمید یک شماره‌دانشجویی
+        # در سیستم ثبت‌نام شده یا نه (جلوگیری از user enumeration)
+        generic_response = Response(
+            {"message": "در صورتی که این شماره دانشجویی در سامانه ثبت شده باشد، لینک بازنشانی رمز عبور به ایمیل مرتبط با آن ارسال خواهد شد"},
+            status=status.HTTP_200_OK
+        )
+
+        user = User.objects.filter(student_no=student_no).first()
+        if user is None or not user.is_active:
+            return generic_response
+
+        try:
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            token = password_reset_token.make_token(user)
+
+            frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+            reset_link = f"{frontend_url}/reset-password/{uid}/{token}/"
+
+            subject = 'بازنشانی رمز عبور - سامانه دانشگاه'
+            message = f"با سلام،\nبرای بازنشانی رمز عبور حساب کاربری خود روی لینک زیر کلیک کنید:\n\n{reset_link}\n\nاگر این درخواست را شما نداده‌اید، این پیام را نادیده بگیرید."
+
+            send_mail(
+                subject,
+                message,
+                'noreply@university.com',
+                [user.email],
+                fail_silently=False,
+            )
+        except Exception:
+            pass
+
+        return generic_response
+
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny], url_path='reset-password/(?P<uidb64>[^/.]+)/(?P<token>[^/.]+)')
+    def reset_password(self, request, uidb64=None, token=None):
+        try:
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            user = None
+
+        if user is None or not password_reset_token.check_token(user, token):
+            return Response({'error': '.لینک بازنشانی رمز عبور نامعتبر یا منقضی شده است'}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = PasswordResetConfirmSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user.set_password(serializer.validated_data['new_password1'])
+        user.save()
+
+        return Response({'message': '.رمز عبور شما با موفقیت تغییر کرد. اکنون می‌توانید با رمز جدید وارد شوید'}, status=status.HTTP_200_OK)
+
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def profile(self, request):
         serializer = UserSerializer(request.user)

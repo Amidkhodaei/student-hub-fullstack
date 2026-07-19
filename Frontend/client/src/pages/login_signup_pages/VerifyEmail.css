@@ -1,0 +1,69 @@
+.verify_email {
+    background-color: rgb(51, 65, 93);
+    width: 35rem;
+    height: 40rem;
+    margin-top: 7%;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5rem;
+
+    border-radius: 1rem;
+    padding: 0 1.5rem;
+    box-sizing: border-box;
+}
+
+.verify_email .icon {
+    font-size: 4rem;
+    line-height: 1;
+}
+
+.verify_email .icon.loading {
+    animation: spin 1.4s linear infinite;
+}
+
+.verify_email .message {
+    color: white;
+    text-align: center;
+    line-height: 1.9;
+    font-size: 1.05rem;
+}
+
+.verify_email .button {
+    display: block;
+    width: 50%;
+    height: 3.5rem;
+    border-radius: 7px;
+    background: rgb(125, 133, 151);
+    color: white;
+    font-size: large;
+    border: none;
+    cursor: pointer;
+}
+
+.verify_email .button:hover,
+.verify_email .button:active {
+    background-color: rgb(0, 18, 51);
+}
+
+.verify_email .text {
+    margin: 0;
+    font-size: large;
+    color: white;
+    text-decoration: none;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.verify_email .text:hover {
+    color: rgb(43, 205, 226);
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

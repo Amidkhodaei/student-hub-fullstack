@@ -65,6 +65,22 @@ class  LessonSerializer(serializers.ModelSerializer):
             'times': {'required': True},
         }
 
+class PasswordResetRequestSerializer(serializers.Serializer):
+    student_no = serializers.CharField()
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    new_password1 = serializers.CharField(write_only=True)
+    new_password2 = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        if attrs['new_password1'] != attrs['new_password2']:
+            raise serializers.ValidationError({'new_password2': 'رمز عبور و تکرار آن یکسان نیستند'})
+        if len(attrs['new_password1']) < 6:
+            raise serializers.ValidationError({'new_password1': 'رمز عبور باید حداقل ۶ کاراکتر باشد'})
+        return attrs
+
+
 class ExcelUploadSerializer(serializers.Serializer):
     department_id = serializers.IntegerField()
     excel_file = serializers.FileField()

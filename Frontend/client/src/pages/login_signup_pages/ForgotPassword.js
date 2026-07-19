@@ -1,122 +1,96 @@
 import InputBox from '../../component/input_box/InputBox';
-import React, {useState} from 'react';
+import React, {useState, useContext} from 'react';
 import { Link } from 'react-router-dom';
 import './ForgotPassword.css'
+import ToastContext from '../../store/Toast/ToastContext';
 
 const ForgotPassword = () => {
-    const [forgotPassInput, setForgotPassInput] = useState({
-            enteredStudentNo: '',
-            enteredFirstName: '',
-            enteredLastName: '',
-            enteredPhone: '',
-            enteredEmail: '',
-            enteredPass1: '',
-            enteredPass2: ''
-        });
+    const { showToast } = useContext(ToastContext);
+    const [studentNo, setStudentNo] = useState('');
+    const [isValidStudentNo, setIsValidStudentNo] = useState(true);
+    const [loading, setLoading] = useState(false);
+    const [status, setStatus] = useState(null); // null | 'success' | 'error'
+    const [message, setMessage] = useState('');
 
-    const [isValidInput, setIsValidInput] = useState({
-            isValidStudentNo: true,
-            isValidEmail: true,
-            isValidPass1: true,
-            isValidPass2: true,
-        });
-    
     const studentnochangehandler = (event) => {
+        setStudentNo(event.target.value);
         if (event.target.value.trim().length > 0) {
-            setIsValidInput((prevState) => {
-                return {...prevState, isValidStudentNo: true}
-            })
+            setIsValidStudentNo(true);
         }
-        setForgotPassInput((prevState) => {
-            return {...prevState, enteredStudentNo: event.target.value};
-        });
     }
 
-    const emailchangehandler = (event) => {
-        if (event.target.value.trim().length > 0) {
-            setIsValidInput((prevState) => {
-                return {...prevState, isValidEmail: true}
-            })
-        }
-        setForgotPassInput((prevState) => {
-            return {...prevState, enteredEmail: event.target.value}
-        })
-    }
+    const submithandler = async (event) => {
+        event.preventDefault();
 
-    const pass1changehandler = (event) => {
-        if (event.target.value.trim().length > 0) {
-            setIsValidInput((prevState) => {
-                return {...prevState, isValidPass1: true}
-            })
+        const trimmed = studentNo.trim();
+        if (trimmed.length === 0) {
+            setIsValidStudentNo(false);
+            return;
         }
-        setForgotPassInput((prevState) => {
-            return {...prevState, enteredPass1: event.target.value}
-        })
-    }
+        setIsValidStudentNo(true);
 
-    const pass2changehandler = (event) => {
-        if (event.target.value.trim().length > 0) {
-            setIsValidInput((prevState) => {
-                return {...prevState, isValidPass2: true}
-            })
-        }
-        setForgotPassInput((prevState) => {
-            return {...prevState, enteredPass2: event.target.value}
-        })
-    }
-    
-    const submithandler = (event) => {
-        event.preventDefault()
+        setLoading(true);
+        setStatus(null);
+        try {
+            const response = await fetch('http://127.0.0.1:8000/api/users/request-password-reset/', {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ student_no: trimmed }),
+            });
 
-        if (forgotPassInput.enteredStudentNo.trim().length === 0) {
-            setIsValidInput((prevState) => {
-                return {...prevState, isValidStudentNo: false}
-            })
-        } else {
-            setIsValidInput((prevState) => {
-                return {...prevState, isValidStudentNo: true}
-            })
-        }
+            const data = await response.json();
 
-        if (forgotPassInput.enteredEmail.trim().length === 0) {
-            setIsValidInput((prevState) => {
-                return {...prevState, isValidEmail: false}
-            })
-        } else {
-            setIsValidInput((prevState) => {
-                return {...prevState, isValidEmail: true}
-            })
-        }
+            if (!response.ok) {
+                throw new Error(data.error || 'sth went wrong!');
+            }
 
-        if (forgotPassInput.enteredPass1.trim().length === 0) {
-            setIsValidInput((prevState) => {
-                return {...prevState, isValidPass1: false}
-            })
-        } else {
-            setIsValidInput((prevState) => {
-                return {...prevState, isValidPass1: true}
-            })
+            setStatus('success');
+            const successMessage = data.message || 'در صورتی که این شماره دانشجویی در سامانه ثبت شده باشد، لینک بازنشانی رمز عبور به ایمیل شما ارسال خواهد شد';
+            setMessage(successMessage);
+            showToast(successMessage, 'success');
+        } catch (error) {
+            setStatus('error');
+            const errMessage = 'ارتباط با سرور برقرار نشد. لطفاً دوباره تلاش کنید';
+            setMessage(errMessage);
+            showToast(errMessage, 'error');
         }
-
-        if (forgotPassInput.enteredPass2.trim().length === 0) {
-            setIsValidInput((prevState) => {
-                return {...prevState, isValidPass2: false}
-            })
-        } else {
-            setIsValidInput((prevState) => {
-                return {...prevState, isValidPass2: true}
-            })
-        }
+        setLoading(false);
     }
 
     return (
         <div className='forgot_Password'>
-            <InputBox type="text" value={forgotPassInput.enteredStudentNo} onChange={studentnochangehandler} isValid={isValidInput.isValidStudentNo} defualt='شماره دانشجویی' />
-            <InputBox type="text" value={forgotPassInput.enteredEmail}     onChange={emailchangehandler}     isValid={isValidInput.isValidEmail} defualt='ایمیل' />
-            <InputBox type="password" value={forgotPassInput.enteredPass1} onChange={pass1changehandler}     isValid={isValidInput.isValidPass1} defualt='رمز عبور جدید' />
-            <InputBox type="password" value={forgotPassInput.enteredPass2} onChange={pass2changehandler}     isValid={isValidInput.isValidPass2} defualt='تکرار رمز عبور جدید' />
-            <button className='button' onClick={submithandler}> تغییر رمز عبور </button>
-            <Link to="/login" className='text'>حساب کاربری دارید؟</Link>
+            {status === 'success' ? (
+                <>
+                    <p style={{ color: 'white', textAlign: 'center', padding: '0 1.5rem', lineHeight: '1.8' }}>{message}</p>
+                    <p style={{ color: 'rgb(180, 190, 205)', textAlign: 'center', padding: '0 1.5rem', fontSize: '0.9rem' }}>
+                        هنوز حساب کاربری نساخته‌اید؟
+                    </p>
+                    <Link to="/signup" className='text'>ساخت اکانت جدید</Link>
+                    <Link to="/login" className='text'>بازگشت به صفحه ورود</Link>
+                </>
+            ) : (
+                <>
+                    <p style={{ color: 'white', textAlign: 'center', padding: '0 1.5rem' }}>
+                        شماره دانشجویی خود را وارد کنید تا لینک بازنشانی رمز عبور برای ایمیل شما ارسال شود
+                    </p>
+                    <InputBox
+                        type="text"
+                        value={studentNo}
+                        onChange={studentnochangehandler}
+                        isValid={isValidStudentNo}
+                        defualt='شماره دانشجویی'
+                        style={{ width: '50%', height: '8%' }}
+                    />
+                    {status === 'error' && (
+                        <p style={{ color: '#ff8080', textAlign: 'center', padding: '0 1.5rem' }}>{message}</p>
+                    )}
+                    {!loading && <button className='button' onClick={submithandler}> ارسال لینک بازنشانی </button>}
+                    {loading && <p style={{color: 'white'}}> ...در حال ارسال </p>}
+                    <Link to="/login" className='text'>حساب کاربری دارید؟</Link>
+                </>
+            )}
         </div>
     );
 }

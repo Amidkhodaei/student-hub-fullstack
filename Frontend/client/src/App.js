@@ -7,6 +7,7 @@ import VerifyEmail from './pages/login_signup_pages/VerifyEmail';
 import Login from './pages/login_signup_pages/Login'
 import SignUp from './pages/login_signup_pages/SignUp'
 import ForgotPassword from './pages/login_signup_pages/ForgotPassword';
+import ResetPassword from './pages/login_signup_pages/ResetPassword';
 import MainPage from './pages/MainPage/MainPage';
 import MainHeader from './pages/MainPage/MainHeader';
 import AddDeptLesson  from './pages/Admin/AddDeptLesson';
@@ -45,6 +46,7 @@ function App() {
             {authCtx.isLoggedIn && <Route path='/admin' element={<AddDeptLesson />} />}
 
             <Route path="/verify-email/:uidb64/:token" element={<VerifyEmail />} />
+            <Route path="/reset-password/:uidb64/:token" element={<ResetPassword />} />
           </Routes>
           <p className='Made'>
             Made By <span className='quaalla'>Quaalla</span>
