@@ -6,12 +6,12 @@ from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticated
 from rest_framework.response import Response
 import pandas as pd
 from django.db import transaction
-from .models import User, Department, Instructor, Lesson
+from .models import User, Department, Instructor, Lesson, SavedSchedule, ScheduleItem
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import (
     UserSerializer, DepartmentSerializer, InstructorSerializer, LessonSerializer,
     ExcelUploadSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer,
-    CustomTokenObtainPairSerializer,
+    CustomTokenObtainPairSerializer, SavedScheduleSerializer,
 )
 from .utils import parse_instructors, parse_schedule_and_exam, normalize_fa_text
 from django.core.exceptions import ValidationError
@@ -79,7 +79,7 @@ class UserViewSet(viewsets.ViewSet):
             user.save()
             return Response({'message': 'حساب کاربری شما با موفقیت فعال شد. اکنون می‌توانید لاگین کنید'}, status=status.HTTP_200_OK)
         
-        return Response({'error': 'لینک تایید نامعتبر یا منقضی شده است'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'لینک تایید نامعتبر یا منقضی شده است.'}, status=status.HTTP_400_BAD_REQUEST)
         
     @action(detail=False, methods=['post'], permission_classes=[AllowAny], url_path='request-password-reset')
     def request_password_reset(self, request):
@@ -171,8 +171,14 @@ class InstructorViewSet(viewsets.ModelViewSet):
         return [IsAdminUser()]
     
 class LessonViewSet(viewsets.ModelViewSet):
-    queryset = Lesson.objects.all()
     serializer_class = LessonSerializer
+
+    def get_queryset(self):
+        queryset = Lesson.objects.all().select_related('department_id')
+        department_id = self.request.query_params.get('department_id')
+        if department_id:
+            queryset = queryset.filter(department_id__dept_id=department_id)
+        return queryset
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
@@ -331,3 +337,22 @@ class UploadLessonsExcelView(APIView):
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+
+
+class SavedScheduleViewSet(viewsets.ModelViewSet):
+    serializer_class = SavedScheduleSerializer
+    permission_classes = [IsAuthenticated]
+
+    MAX_SCHEDULES_PER_USER = 5
+
+    def get_queryset(self):
+        return SavedSchedule.objects.filter(user=self.request.user).prefetch_related('items__lesson').order_by('-updated_at')
+
+    def create(self, request, *args, **kwargs):
+        existing_count = SavedSchedule.objects.filter(user=request.user).count()
+        if existing_count >= self.MAX_SCHEDULES_PER_USER:
+            return Response(
+                {'error': f'شما نمی‌توانید بیش از {self.MAX_SCHEDULES_PER_USER} برنامه داشته باشید. لطفاً ابتدا یکی از برنامه‌های قبلی را حذف کنید'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return super().create(request, *args, **kwargs)

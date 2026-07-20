@@ -99,3 +99,25 @@ class Lesson(models.Model):
     
     def __str__(self):
         return f"{self.lesson_id} - {self.lesson_name}"
+
+
+class SavedSchedule(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='saved_schedules')
+    title = models.CharField(max_length=100, blank=True, default='برنامه من')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.title} ({self.user.student_no})"
+
+
+class ScheduleItem(models.Model):
+    schedule = models.ForeignKey(SavedSchedule, on_delete=models.CASCADE, related_name='items')
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='schedule_items')
+    color = models.CharField(max_length=7, default='#248F24')  # کد رنگ هگز
+
+    class Meta:
+        unique_together = ('schedule', 'lesson')
+
+    def __str__(self):
+        return f"{self.lesson.lesson_name} @ {self.schedule.title}"

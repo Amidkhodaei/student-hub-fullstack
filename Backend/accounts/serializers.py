@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from .models import User, Department, Instructor, Lesson
+from .models import User, Department, Instructor, Lesson, SavedSchedule, ScheduleItem
 
 class UserSerializer(serializers.ModelSerializer):
     fullname = serializers.SerializerMethodField(read_only = True)
@@ -89,6 +89,46 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['is_staff'] = user.is_staff
         token['fullname'] = f"{user.first_name} {user.last_name}"
         return token
+
+
+class ScheduleItemSerializer(serializers.ModelSerializer):
+    lesson_detail = LessonSerializer(source='lesson', read_only=True)
+
+    class Meta:
+        model = ScheduleItem
+        fields = ['id', 'lesson', 'lesson_detail', 'color']
+        extra_kwargs = {
+            'lesson': {'write_only': True},
+        }
+
+
+class SavedScheduleSerializer(serializers.ModelSerializer):
+    items = ScheduleItemSerializer(many=True)
+
+    class Meta:
+        model = SavedSchedule
+        fields = ['id', 'title', 'created_at', 'updated_at', 'items']
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def create(self, validated_data):
+        items_data = validated_data.pop('items')
+        user = self.context['request'].user
+        schedule = SavedSchedule.objects.create(user=user, **validated_data)
+        for item_data in items_data:
+            ScheduleItem.objects.create(schedule=schedule, **item_data)
+        return schedule
+
+    def update(self, instance, validated_data):
+        items_data = validated_data.pop('items', None)
+        instance.title = validated_data.get('title', instance.title)
+        instance.save()
+
+        if items_data is not None:
+            instance.items.all().delete()
+            for item_data in items_data:
+                ScheduleItem.objects.create(schedule=instance, **item_data)
+
+        return instance
 
 
 class ExcelUploadSerializer(serializers.Serializer):

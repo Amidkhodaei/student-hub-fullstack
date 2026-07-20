@@ -11,6 +11,7 @@ import ResetPassword from './pages/login_signup_pages/ResetPassword';
 import MainPage from './pages/MainPage/MainPage';
 import MainHeader from './pages/MainPage/MainHeader';
 import AddDeptLesson  from './pages/Admin/AddDeptLesson';
+import Terminder from './pages/Schedule/Terminder';
 
 function App() {
   const authCtx = useContext(AuthContext);
@@ -52,6 +53,9 @@ function App() {
               <Route path='/admin' element={<Navigate to="/dashboard" />} />}
             {!authCtx.isLoggedIn &&
               <Route path='/admin' element={<Navigate to="/login" />} />}
+
+            {authCtx.isLoggedIn && <Route path='/terminder' element={<Terminder />} />}
+            {!authCtx.isLoggedIn && <Route path='/terminder' element={<Navigate to="/login" />} />}
 
             <Route path="/verify-email/:uidb64/:token" element={<VerifyEmail />} />
             <Route path="/reset-password/:uidb64/:token" element={<ResetPassword />} />
