@@ -1,17 +1,18 @@
-import { WEEK_DAYS, getTimeLabels, timeToSlotIndex, SLOTS_COUNT } from './scheduleUtils';
+import { WEEK_DAYS, getTimeLabels, timeToSlotIndex, SLOTS_COUNT, DEFAULT_LESSON_COLOR, getConflictColor } from './scheduleUtils';
 import './WeekSchedule.css';
-
-const DEFAULT_COLOR = '#2BCDE2';
-const CONFLICT_COLOR = '#dc5353';
 
 const WeekSchedule = ({ items = [], onDelete, onLessonClick }) => {
     const timeLabels = getTimeLabels();
 
-    // هر آیتم چارت شامل: { lesson, color, hasConflict }
+    // هر آیتم چارت شامل: { lesson, hasConflict, conflictRank, conflictCount }
     // برای هر بازه‌ی زمانی lesson.times یک بلوک جدا در گرید رسم می‌شود.
     const blocks = [];
     items.forEach((item) => {
-        const { lesson, color, hasConflict } = item;
+        const { lesson, hasConflict, conflictRank, conflictCount } = item;
+        const blockColor = hasConflict
+            ? getConflictColor(conflictRank, conflictCount)
+            : DEFAULT_LESSON_COLOR;
+
         (lesson.times || []).forEach((time, timeIdx) => {
             const rawStartSlot = timeToSlotIndex(time.start);
             const rawEndSlot = timeToSlotIndex(time.end);
@@ -29,7 +30,7 @@ const WeekSchedule = ({ items = [], onDelete, onLessonClick }) => {
                 startSlot,
                 endSlot,
                 isExerciseSolving: time.isExerciseSolving,
-                color: hasConflict ? CONFLICT_COLOR : (color || DEFAULT_COLOR),
+                color: blockColor,
                 hasConflict: !!hasConflict,
             });
         });

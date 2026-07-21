@@ -52,7 +52,7 @@ class UserViewSet(viewsets.ViewSet):
                 )
                 
                 return Response(
-                    {"message": "ثبت‌نام با موفقیت انجام شد. لینک فعال‌سازی به ایمیل شما ارسال گردید"},
+                    {"message": "ثبت‌نام با موفقیت انجام شد. لینک فعال‌سازی به ایمیل شما ارسال گردید."},
                     status=status.HTTP_201_CREATED
                 )
             except Exception as e:
@@ -73,11 +73,11 @@ class UserViewSet(viewsets.ViewSet):
 
         if user is not None and account_activation_token.check_token(user, token):
             if user.is_active:
-                return Response({'message': 'این حساب کاربری قبلاً فعال شده است'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'message': 'این حساب کاربری قبلاً فعال شده است.'}, status=status.HTTP_400_BAD_REQUEST)
             
             user.is_active = True
             user.save()
-            return Response({'message': 'حساب کاربری شما با موفقیت فعال شد. اکنون می‌توانید لاگین کنید'}, status=status.HTTP_200_OK)
+            return Response({'message': 'حساب کاربری شما با موفقیت فعال شد. اکنون می‌توانید لاگین کنید.'}, status=status.HTTP_200_OK)
         
         return Response({'error': 'لینک تایید نامعتبر یا منقضی شده است.'}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -90,7 +90,7 @@ class UserViewSet(viewsets.ViewSet):
         # پیام موفقیت همیشه یکسان است تا نشود فهمید یک شماره‌دانشجویی
         # در سیستم ثبت‌نام شده یا نه (جلوگیری از user enumeration)
         generic_response = Response(
-            {"message": "در صورتی که این شماره دانشجویی در سامانه ثبت شده باشد، لینک بازنشانی رمز عبور به ایمیل مرتبط با آن ارسال خواهد شد"},
+            {"message": "در صورتی که این شماره دانشجویی در سامانه ثبت شده باشد، لینک بازنشانی رمز عبور به ایمیل مرتبط با آن ارسال خواهد شد."},
             status=status.HTTP_200_OK
         )
 
@@ -131,7 +131,7 @@ class UserViewSet(viewsets.ViewSet):
             user = None
 
         if user is None or not password_reset_token.check_token(user, token):
-            return Response({'error': 'لینک بازنشانی رمز عبور نامعتبر یا منقضی شده است'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'لینک بازنشانی رمز عبور نامعتبر یا منقضی شده است.'}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = PasswordResetConfirmSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -139,7 +139,7 @@ class UserViewSet(viewsets.ViewSet):
         user.set_password(serializer.validated_data['new_password1'])
         user.save()
 
-        return Response({'message': 'رمز عبور شما با موفقیت تغییر کرد. اکنون می‌توانید با رمز جدید وارد شوید'}, status=status.HTTP_200_OK)
+        return Response({'message': 'رمز عبور شما با موفقیت تغییر کرد. اکنون می‌توانید با رمز جدید وارد شوید.'}, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def profile(self, request):
@@ -178,6 +178,14 @@ class LessonViewSet(viewsets.ModelViewSet):
         department_id = self.request.query_params.get('department_id')
         if department_id:
             queryset = queryset.filter(department_id__dept_id=department_id)
+
+        # کاربران عادی فقط دروس فعال را می‌بینند؛ ادمین با include_inactive=1
+        # می‌تواند دروس غیرفعال‌شده را هم برای مدیریت ببیند
+        include_inactive = self.request.query_params.get('include_inactive') == '1'
+        is_admin = self.request.user and self.request.user.is_authenticated and self.request.user.is_staff
+        if not (include_inactive and is_admin):
+            queryset = queryset.filter(is_active=True)
+
         return queryset
 
     def get_permissions(self):
@@ -207,9 +215,15 @@ class UploadLessonsExcelView(APIView):
             created_lessons = []
             changed_lessons = []
             notchanged_lessons = []
+            reactivated_lessons = []
             errors = []
 
             with transaction.atomic():
+                # ابتدا همه‌ی دروس این دانشکده غیرفعال می‌شوند؛ هر درسی که در ادامه‌ی
+                # این فایل اکسل واقعاً پردازش شود، دوباره فعال می‌شود. دروسی که در فایل
+                # جدید نیستند (یعنی از دانشکده حذف شده‌اند) غیرفعال باقی می‌مانند.
+                Lesson.objects.filter(department_id=department).update(is_active=False)
+
                 for index, row in df.iterrows():
                     try:
                         lesson_id_raw = str(row.iloc[0]).strip() if pd.notna(row.iloc[0]) else ""
@@ -248,6 +262,7 @@ class UploadLessonsExcelView(APIView):
                         haschange = False
                         
                         if lesson:
+                            was_inactive = not lesson.is_active
                             if lesson.lesson_name != lesson_name:
                                 lesson.lesson_name = lesson_name
                                 haschange = True
@@ -275,6 +290,9 @@ class UploadLessonsExcelView(APIView):
                             if lesson.description != description:
                                 lesson.description = description
                                 haschange = True
+                            # درس در فایل اکسل جدید حضور دارد، پس دوباره فعال می‌شود
+                            # (فعال‌سازی مجدد به‌تنهایی به معنای "تغییر محتوا" حساب نمی‌شود)
+                            lesson.is_active = True
                             lesson.full_clean()
                             lesson.save()
                             lesson_report = {
@@ -285,7 +303,9 @@ class UploadLessonsExcelView(APIView):
                             }
                             if haschange == True:
                                 changed_lessons.append(lesson_report)
-                            if haschange == False:
+                            elif was_inactive:
+                                reactivated_lessons.append(lesson_report)
+                            else:
                                 notchanged_lessons.append(lesson_report)
                         else:
                             lesson = Lesson(
@@ -299,7 +319,8 @@ class UploadLessonsExcelView(APIView):
                                 instructors_list=instructors_list,
                                 times=times,
                                 exam_time=exam_time,
-                                description=description
+                                description=description,
+                                is_active=True
                             )
                             lesson.full_clean()
                             lesson.save()
@@ -318,7 +339,8 @@ class UploadLessonsExcelView(APIView):
             summary_message = (
                 f'{len(created_lessons)} درس جدید اضافه شد، '
                 f'{len(changed_lessons)} درس به‌روزرسانی شد، '
-                f'{len(notchanged_lessons)} درس بدون تغییر بود.'
+                f'{len(reactivated_lessons)} درس مجدداً فعال شد، '
+                f'{len(notchanged_lessons)} درس بدون تغییر بود'
             )
 
             return Response({
@@ -326,6 +348,7 @@ class UploadLessonsExcelView(APIView):
                 'message': summary_message,
                 'created_lessons': created_lessons,
                 'changed_lessons': changed_lessons,
+                'reactivated_lessons': reactivated_lessons,
                 'notchanged_lessons': notchanged_lessons,
                 'errors': errors
             }, status=status.HTTP_201_CREATED if len(errors) == 0 else status.HTTP_400_BAD_REQUEST)
@@ -336,10 +359,18 @@ class UploadLessonsExcelView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
 class CustomTokenObtainPairView(TokenObtainPairView):
+    """
+    نسخه‌ی سفارشی ورود که از CustomTokenObtainPairSerializer استفاده می‌کند
+    تا claim های اضافی (is_staff, fullname) داخل توکن قرار بگیرند.
+    """
     serializer_class = CustomTokenObtainPairSerializer
 
 
 class SavedScheduleViewSet(viewsets.ModelViewSet):
+    """
+    مدیریت برنامه‌های هفتگی ذخیره‌شده‌ی کاربر (حداکثر ۵ برنامه به ازای هر کاربر).
+    هر کاربر فقط به برنامه‌های خودش دسترسی دارد.
+    """
     serializer_class = SavedScheduleSerializer
     permission_classes = [IsAuthenticated]
 
@@ -348,11 +379,45 @@ class SavedScheduleViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return SavedSchedule.objects.filter(user=self.request.user).prefetch_related('items__lesson').order_by('-updated_at')
 
+    def _cleanup_inactive_items(self, schedules):
+        """
+        دروسِ غیرفعال‌شده (is_active=False) را از برنامه‌های کاربر در دیتابیس حذف می‌کند
+        تا در درخواست‌های بعدی دوباره گزارش نشوند. لیست دروس حذف‌شده را برمی‌گرداند
+        تا بتوان همین یک‌بار به کاربر اطلاع داد.
+        """
+        removed = []
+        for schedule in schedules:
+            inactive_items = [item for item in schedule.items.all() if not item.lesson.is_active]
+            for item in inactive_items:
+                removed.append(item.lesson)
+            if inactive_items:
+                ScheduleItem.objects.filter(id__in=[item.id for item in inactive_items]).delete()
+        return removed
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        schedules = list(queryset)
+
+        removed_lessons = self._cleanup_inactive_items(schedules)
+
+        # پس از حذف، لیست را دوباره از دیتابیس تازه‌سازی می‌کنیم تا آیتم‌های حذف‌شده در پاسخ نباشند
+        if removed_lessons:
+            schedules = list(self.get_queryset())
+
+        serializer = self.get_serializer(schedules, many=True)
+
+        removed_lessons_data = LessonSerializer(removed_lessons, many=True).data if removed_lessons else []
+
+        return Response({
+            'schedules': serializer.data,
+            'removed_lessons': removed_lessons_data,
+        })
+
     def create(self, request, *args, **kwargs):
         existing_count = SavedSchedule.objects.filter(user=request.user).count()
         if existing_count >= self.MAX_SCHEDULES_PER_USER:
             return Response(
-                {'error': f'شما نمی‌توانید بیش از {self.MAX_SCHEDULES_PER_USER} برنامه داشته باشید. لطفاً ابتدا یکی از برنامه‌های قبلی را حذف کنید'},
+                {'error': f'شما نمی‌توانید بیش از {self.MAX_SCHEDULES_PER_USER} برنامه داشته باشید. لطفاً ابتدا یکی از برنامه‌های قبلی را حذف کنید.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         return super().create(request, *args, **kwargs)

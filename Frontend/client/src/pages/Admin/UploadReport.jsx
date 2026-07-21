@@ -17,10 +17,19 @@ const LessonRow = ({ lesson, badgeType, badgeLabel }) => (
 const UploadReport = ({ report }) => {
     if (!report) return null;
 
-    const { created_lessons = [], changed_lessons = [], notchanged_lessons = [], errors = [] } = report;
+    const {
+        created_lessons = [],
+        changed_lessons = [],
+        reactivated_lessons = [],
+        notchanged_lessons = [],
+        errors = [],
+    } = report;
 
     const hasAnyLesson =
-        created_lessons.length > 0 || changed_lessons.length > 0 || notchanged_lessons.length > 0;
+        created_lessons.length > 0 ||
+        changed_lessons.length > 0 ||
+        reactivated_lessons.length > 0 ||
+        notchanged_lessons.length > 0;
 
     if (!hasAnyLesson && errors.length === 0) {
         return null;
@@ -45,6 +54,17 @@ const UploadReport = ({ report }) => {
                     <ul className='lesson_list'>
                         {changed_lessons.map((lesson) => (
                             <LessonRow key={lesson.lesson_id} lesson={lesson} badgeType='changed' badgeLabel='آپدیت شد' />
+                        ))}
+                    </ul>
+                </div>
+            )}
+
+            {reactivated_lessons.length > 0 && (
+                <div className='report_section'>
+                    <p className='report_section_title reactivated'>دروس فعال‌شده مجدد ({reactivated_lessons.length})</p>
+                    <ul className='lesson_list'>
+                        {reactivated_lessons.map((lesson) => (
+                            <LessonRow key={lesson.lesson_id} lesson={lesson} badgeType='reactivated' badgeLabel='فعال شد' />
                         ))}
                     </ul>
                 </div>

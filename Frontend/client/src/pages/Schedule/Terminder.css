@@ -12,8 +12,82 @@
     width: 100%;
     max-width: 75rem;
     color: white;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.terminder_summary_header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.8rem;
     font-weight: bold;
-    text-align: right;
+}
+
+.terminder_summary_actions {
+    display: flex;
+    gap: 0.6rem;
+}
+
+.terminder_action_btn {
+    height: 2.4rem;
+    padding: 0 1rem;
+    border-radius: 0.5rem;
+    border: none;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: white;
+}
+
+.terminder_action_btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.terminder_action_btn.save {
+    background-color: rgb(43, 150, 160);
+}
+
+.terminder_action_btn.save:hover:not(:disabled) {
+    background-color: rgb(43, 205, 226);
+}
+
+.terminder_action_btn.clear {
+    background-color: rgb(120, 60, 60);
+}
+
+.terminder_action_btn.clear:hover:not(:disabled) {
+    background-color: rgb(220, 83, 83);
+}
+
+.terminder_selected_list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.terminder_selected_item {
+    background-color: rgb(51, 65, 93);
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.9rem;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+}
+
+.terminder_selected_name {
+    font-weight: bold;
+}
+
+.terminder_selected_exam {
+    color: rgb(190, 198, 212);
 }
 
 .terminder_controls {

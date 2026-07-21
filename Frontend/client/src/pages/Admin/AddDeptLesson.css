@@ -56,6 +56,10 @@
     border-right-color: rgb(125, 133, 151);
 }
 
+.upload_report .report_section_title.reactivated {
+    border-right-color: rgb(80, 200, 120);
+}
+
 .upload_report .report_section_title.errors {
     border-right-color: rgb(220, 83, 83);
 }
@@ -115,6 +119,11 @@
 .upload_report .lesson_badge.notchanged {
     background-color: rgba(125, 133, 151, 0.25);
     color: rgb(200, 205, 214);
+}
+
+.upload_report .lesson_badge.reactivated {
+    background-color: rgba(80, 200, 120, 0.2);
+    color: rgb(80, 200, 120);
 }
 
 .upload_report .error_item {

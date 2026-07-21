@@ -76,6 +76,7 @@ class Lesson(models.Model):
     times = models.JSONField(default=list, blank=True, null=True)
     exam_time = models.JSONField(default=list, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
 
     def clean(self):
         if not isinstance(self.times, list):
@@ -102,6 +103,10 @@ class Lesson(models.Model):
 
 
 class SavedSchedule(models.Model):
+    """
+    یک برنامه‌ی هفتگی ذخیره‌شده توسط کاربر (شامل چند درس انتخاب‌شده با رنگ اختصاصی).
+    هر کاربر می‌تواند چند برنامه‌ی مختلف داشته باشد.
+    """
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='saved_schedules')
     title = models.CharField(max_length=100, blank=True, default='برنامه من')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -112,6 +117,9 @@ class SavedSchedule(models.Model):
 
 
 class ScheduleItem(models.Model):
+    """
+    یک درسِ داخل یک برنامه‌ی ذخیره‌شده، به همراه رنگ اختصاصی آن در چارت.
+    """
     schedule = models.ForeignKey(SavedSchedule, on_delete=models.CASCADE, related_name='items')
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='schedule_items')
     color = models.CharField(max_length=7, default='#248F24')  # کد رنگ هگز
